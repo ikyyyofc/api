@@ -52,7 +52,7 @@ module.exports = {
           data: {
             id: id,
             plugin: '${pluginName}',
-            message: \`Item with ID \${id} from ${pluginName} plugin\`
+            message: `Item with ID \${id} from ${pluginName} plugin`
           }
         });
       }
