@@ -20,7 +20,6 @@ async function createPlugin() {
   const pluginDescription = await askQuestion('Description: ');
   const pluginVersion = await askQuestion('Version (default: 1.0.0): ') || '1.0.0';
   
-  const template = `// ${pluginName}.js - Auto-generated plugin
 module.exports = {
   name: '${pluginName}',
   version: '${pluginVersion}',
@@ -77,8 +76,7 @@ module.exports = {
       }
     }
   ]
-};
-`;
+};;
 
   const pluginPath = path.join(__dirname, '..', 'plugins', `${pluginName}.js`);
   
