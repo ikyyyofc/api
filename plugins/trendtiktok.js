@@ -27,6 +27,16 @@ function router(app, routes = [], pluginName) {
 
         res.json(trend.data.data);
     });
+    app.post("/covertiktok", async (req, res) => {
+        if (!req.body.data) {
+            return res.status(400).json({
+                status: false,
+                error: "data parameter is required"
+            });
+        }
+
+        res.json(trend.data.data);
+    });
 }
 
 module.exports = router;
