@@ -11,7 +11,7 @@ api.addPlugin(userPlugin);
 api.addPlugin(productPlugin);
 
 // Menjalankan server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7860;
 api.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
   console.log('Plugins yang aktif:', api.plugins);
