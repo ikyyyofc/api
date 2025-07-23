@@ -5,8 +5,7 @@ function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName, // Menggunakan nama file sebagai nama plugin
         endpoints: [
-            { method: "GET", path: "/text", description: "Get text response" },
-            { method: "POST", path: "/post", description: "Post text data" }
+            { method: "POST", path: "/chatgpt/post", description: "Post text data" }
         ]
     });
 
