@@ -1,4 +1,4 @@
-// script.js
+// public/script.js
 document.addEventListener('DOMContentLoaded', function() {
     const pluginsContainer = document.getElementById('plugins-container');
     const endpointsContainer = document.getElementById('endpoints-container');
@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const requestBody = document.getElementById('request-body');
     const sendButton = document.getElementById('send-request');
     const responseOutput = document.getElementById('response-output');
+    const queryParamsContainer = document.getElementById('query-params-container');
 
     // Memuat data plugin dan endpoint
     fetch('/api/plugins')
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Tambahkan prefix /api jika tidak ada
+        // Tambahkan prefix / jika tidak ada
         if (!url.startsWith('/')) {
             url = '/' + url;
         }
