@@ -1,17 +1,31 @@
-module.exports = {
-  name: 'nama-plugin',
-  version: '1.0.0',
-  description: 'Deskripsi plugin',
-  
-  routes: [
-    {
-      method: 'POST', // GET, POST, PUT, DELETE, PATCH, etc.
-      path: '/api/tes',
-      middleware: [middlewareFunction], // Opsional
-      handler: (req, res) => {
-        // Handler function
-        res.json({ message: 'Hello from plugin!' });
-      }
+// plugins/productPlugin.js
+function router(app, routes = []) {
+
+  // Menyimpan informasi route
+  routes.push({
+    plugin: 'chatgpt request',
+    endpoints: [
+      { method: 'GET', path: '/text', description: 'Get all products' },
+      { method: 'POST', path: '/post', description: 'Create new product' }
+    ]
+  });
+
+  // GET /products - Mendapatkan semua produk
+  app.get('/text', (req, res) => {
+    res.json({true});
+  });
+
+  // POST /products - Menambahkan produk baru
+  app.post('/post', (req, res) => {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'text are required' });
     }
-  ]
-};
+    
+    
+    res.status(201).json({true});
+  });
+}
+
+module.exports = productPlugin;
