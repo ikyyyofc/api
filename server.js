@@ -34,9 +34,12 @@ class PluginBasedAPI {
           
           // Pastikan plugin adalah fungsi
           if (typeof plugin === 'function') {
-            plugin(this.app, this.routes);
-            this.plugins.push(plugin.name || file);
-            console.log(`Plugin loaded: ${plugin.name || file}`);
+            // Menggunakan nama file sebagai nama plugin (tanpa ekstensi)
+            const pluginName = path.basename(file, '.js');
+            
+            plugin(this.app, this.routes, pluginName);
+            this.plugins.push(pluginName);
+            console.log(`Plugin loaded: ${pluginName}`);
           } else {
             console.warn(`Invalid plugin in file: ${file}. Plugin must be a function.`);
           }
