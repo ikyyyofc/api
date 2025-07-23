@@ -9,7 +9,7 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    app.post("/post", async (req, res) => {
+    app.post("/chatgpt/post", async (req, res) => {
         if (!req.body) {
             return res.status(400).json({
                 status: false,
