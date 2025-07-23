@@ -19,6 +19,17 @@ function router(app, routes = [], pluginName) {
 
         res.json({ status: true, result: gemini });
     });
+    app.get("/gemini/tt", async (req, res) => {
+        if (!req.query.tt) {
+            return res.status(400).json({
+                status: false,
+                error: "tt is required"
+            });
+        }
+        let gemini = await chatWithGemini(req.body.messages);
+
+        res.json({ status: true, result: gemini });
+    });
 }
 
 module.exports = router;
