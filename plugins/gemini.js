@@ -15,7 +15,7 @@ function router(app, routes = [], pluginName) {
                 error: "body is required"
             });
         }
-        let gemini = await chatWithGemini(body.messages);
+        let gemini = await chatWithGemini(req.body.messages);
 
         res.json({ status: true, result: gemini });
     });
