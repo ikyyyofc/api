@@ -35,8 +35,28 @@ function router(app, routes = [], pluginName) {
             });
         }
 
+        let img_url = [];
+
+        for (let x of req.body.data) {
+            delay(10000);
+            axios
+                .get(
+                    "https://api.fasturl.link/aiexperience/describeimage?url=" +
+                        x.cover
+                )
+                .then(a =>
+                    img_url.push({
+                        url: `https://api.fasturl.link/aiimage/gemini?prompt=${a.data.result}&imageUrl=${x.cover}`
+                    })
+                );
+        }
+
         res.json(trend.data.data);
     });
 }
 
 module.exports = router;
+
+const delay = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
