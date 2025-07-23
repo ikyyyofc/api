@@ -242,3 +242,14 @@ button:hover {
         padding: 20px 15px;
     }
 }
+
+/* Tambahkan style berikut ke public/style.css */
+
+#query-params-container {
+    margin-bottom: 20px;
+}
+
+#query-params {
+    min-height: 80px;
+    font-family: monospace;
+}
