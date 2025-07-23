@@ -54,10 +54,17 @@ function router(app, routes = [], pluginName) {
 
             // 3. Validasi item individual
             if (!item || !item.cover) {
-                results.push({
-                    error: `Item at index ${i} is missing 'cover' property`
-                });
-                // Jangan return/error di sini, lanjutkan ke item berikutnya
+                // Jika tidak ada cover, Anda bisa memutuskan:
+                // - Melewatkan item ini: continue;
+                // - Menyimpan error khusus:
+                // results.push({ error: `Item at index ${i} is missing 'cover' property` });
+                // - Menyimpan string kosong atau null:
+                // results.push({ url: null });
+                // Untuk sekarang, kita lewati item yang tidak valid
+                console.warn(
+                    `Item at index ${i} is missing 'cover' property, skipping.`
+                );
+                results.push({ url: null }); // Atau url: '' jika lebih disukai
                 continue;
             }
 
@@ -81,16 +88,16 @@ function router(app, routes = [], pluginName) {
                 // 6. Simpan hasil sukses
                 results.push({ url: geminiUrl });
             } catch (error) {
-                // 7. Tangkap error untuk item ini dan simpan
+                // 7. Tangkap error untuk item ini dan ganti dengan URL cover asli
                 console.error(
                     `Error processing item at index ${i} (${item.cover}):`,
                     error.message
                 );
-                results.push({
-                    error:
-                        error.message || `Failed to process item at index ${i}`
-                });
-                // Lanjutkan ke item berikutnya setelah menangkap error
+                // Ganti dengan URL cover asli
+                results.push({ url: item.cover });
+                // Jika Anda ingin log error tetap ada tapi tidak dikirim ke client:
+                // Anda bisa menyimpannya di log saja, atau menambahkan properti tambahan:
+                // results.push({ url: item.cover, _processingError: error.message });
             }
 
             // 8. Terapkan delay SETELAH permintaan (sukses atau gagal)
