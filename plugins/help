@@ -14,9 +14,9 @@ function router(app, routes = [], pluginName) {
             });
         }
 
-        const ai = await askAI(req.body);
+        //bebass ini logika
 
-        res.json(ai);
+        res.json({status: true});
     });
 }
 
