@@ -34,7 +34,7 @@ function router(app, routes = [], pluginName) {
             },
             {
                 role: "user",
-                content: (JSON.parse(req.body.text)).data
+                content: req.body.text
             }
         ]);
 
