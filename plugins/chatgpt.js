@@ -1,27 +1,50 @@
-function router(app, routes = []) {
+function router(app, routes = [], pluginName) {
     // Menyimpan informasi route
     routes.push({
-        plugin: "chatgpt request",
+        plugin: pluginName, // Menggunakan nama file sebagai nama plugin
         endpoints: [
-            { method: "GET", path: "/text", description: "Get all products" },
-            { method: "POST", path: "/post", description: "Create new product" }
+            { method: "GET", path: "/text", description: "Get text response" },
+            { method: "POST", path: "/post", description: "Post text data" }
         ]
     });
 
-    // GET /products - Mendapatkan semua produk
+    // GET /text - Mendapatkan response dengan parameter query
     app.get("/text", (req, res) => {
-        res.json({ status: true });
+        // Mengambil parameter dari query string
+        const { message, format } = req.query;
+
+        // Response berdasarkan parameter
+        const response = {
+            status: true,
+            message: message || "Default message",
+            timestamp: new Date().toISOString()
+        };
+
+        // Jika format=json, kirim sebagai JSON
+        if (format === "json") {
+            res.json(response);
+        } else {
+            // Untuk format lain atau default
+            res.json(response);
+        }
     });
 
-    // POST /products - Menambahkan produk baru
+    // POST /post - Menambahkan data
     app.post("/post", (req, res) => {
         const { text } = req.body;
 
         if (!text) {
-            return res.json({ error: "text are required" });
+            return res.status(400).json({
+                status: false,
+                error: "text is required"
+            });
         }
 
-        res.json({ status: true });
+        res.json({
+            status: true,
+            receivedText: text,
+            timestamp: new Date().toISOString()
+        });
     });
 }
 
