@@ -20,7 +20,7 @@ function router(app, routes = [], pluginName) {
         res.json({ status: true, result: gemini });
     });
     app.post("/gemini/tt", async (req, res) => {
-        if (!req.query.text) {
+        if (!req.body.text) {
             return res.status(400).json({
                 status: false,
                 error: "text is required"
@@ -34,7 +34,7 @@ function router(app, routes = [], pluginName) {
             },
             {
                 role: "user",
-                content: req.query.text
+                content: req.body.text
             }
         ]);
 
