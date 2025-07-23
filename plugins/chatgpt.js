@@ -25,12 +25,17 @@ function router(app, routes = [], pluginName) {
 }
 
 module.exports = router;
+
+// Komentar: Pastikan axios dan fungsi estimateTokens didefinisikan di tempat lain
+
 const INTERNAL_MODEL_ID = "claude-3-sonnet";
 const DISPLAYED_MODEL_NAME = "claude-3-5-sonnet";
+
 async function askAI(body, options = {}) {
     const { model, messages, max_tokens, temperature, user, ...rest } =
         body || {};
 
+    // Validasi messages
     if (!messages) {
         return Promise.reject(
             createOpenAIError(
@@ -63,6 +68,7 @@ async function askAI(body, options = {}) {
         );
     }
 
+    // Validasi setiap pesan dalam array
     for (const [index, msg] of messages.entries()) {
         if (!msg || typeof msg !== "object") {
             return Promise.reject(
@@ -84,7 +90,16 @@ async function askAI(body, options = {}) {
                 )
             );
         }
+        // Perbaikan: Tambahkan validasi role yang valid
         if (!["system", "user", "assistant"].includes(msg.role)) {
+             return Promise.reject(
+                createOpenAIError(
+                    `Message at index ${index} has an invalid 'role'. Valid roles are 'system', 'user', or 'assistant'.`,
+                    "invalid_request_error",
+                    `messages[${index}].role`,
+                    "message_role_invalid"
+                )
+            );
         }
         if (typeof msg.content !== "string") {
             return Promise.reject(
@@ -98,6 +113,7 @@ async function askAI(body, options = {}) {
         }
     }
 
+    // Proses pesan: ubah role 'system' menjadi 'user'
     let processedMessages = [];
     let systemMessagesAsUser = [];
 
@@ -111,23 +127,37 @@ async function askAI(body, options = {}) {
 
     const finalMessagesToSend = [...systemMessagesAsUser, ...processedMessages];
 
+    // Periksa apakah ada pesan setelah pemrosesan
+    if (finalMessagesToSend.length === 0) {
+         return Promise.reject(
+            createOpenAIError(
+                "No valid messages to send after processing.",
+                "invalid_request_error",
+                "messages"
+            )
+        );
+    }
+
     try {
+        // Perbaikan: Akses pesan terakhir dengan benar menggunakan .length - 1
+        const lastMessage = finalMessagesToSend[finalMessagesToSend.length - 1];
+        const history = finalMessagesToSend.slice(0, -1); // Semua pesan sebelum yang terakhir
+
         const apiResponse = await axios.post(
-            "https://whatsthebigdata.com/api/ask-ai/",
+            "https://whatsthebigdata.com/api/ask-ai/", // Perbaikan: Hapus spasi ekstra
             {
-                message: finalMessagesToSend[finalMessagesToSend - 1].content,
-                history: finalMessagesToSend.slice(0, -1),
+                message: lastMessage.content, // Perbaikan: Gunakan konten dari lastMessage
+                history: history,             // Perbaikan: Gunakan history yang dihitung
                 model: INTERNAL_MODEL_ID
             },
             {
                 headers: {
                     "content-type": "application/json",
-                    origin: "https://whatsthebigdata.com",
-                    referer: "https://whatsthebigdata.com/ai-chat/",
+                    "origin": "https://whatsthebigdata.com", // Perbaikan: Hapus spasi ekstra
+                    "referer": "https://whatsthebigdata.com/ai-chat/", // Perbaikan: Hapus spasi ekstra
                     "user-agent":
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
                 },
-
                 timeout: options.timeout || 10000
             }
         );
@@ -222,12 +252,13 @@ async function askAI(body, options = {}) {
                     errorCode = `http_${status}`;
                 }
             } else if (error.request) {
+                // No response received
                 errorMessage =
                     "No response received from the server. Please check your internet connection.";
                 errorType = "service_unavailable";
                 errorCode = "no_response";
             } else {
-                // Kesalahan lain saat menyiapkan permintaan
+                // Request setup error
                 errorMessage = `Request setup error: ${error.message}`;
                 errorType = "unknown_error";
                 errorCode = "request_setup_error";
@@ -244,6 +275,7 @@ async function askAI(body, options = {}) {
     }
 }
 
+// Fungsi pembantu untuk membuat error dalam format OpenAI
 function createOpenAIError(message, type, param = null, code = null) {
     return {
         error: {
@@ -255,7 +287,16 @@ function createOpenAIError(message, type, param = null, code = null) {
     };
 }
 
+// Fungsi pembantu untuk estimasi jumlah token (perkiraan kasar)
 function estimateTokens(str) {
     if (!str) return 0;
+    // Perkiraan kasar: 1 token sekitar 4 karakter
     return Math.ceil(str.length / 4);
 }
+
+// Contoh penggunaan (tidak dijalankan):
+/*
+askAI({ messages: [{ role: "user", content: "Hello!" }] })
+  .then(response => console.log(response))
+  .catch(error => console.error(error));
+*/
