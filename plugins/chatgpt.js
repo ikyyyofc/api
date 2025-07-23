@@ -10,43 +10,17 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    // GET /text - Mendapatkan response dengan parameter query
-    app.get("/text", (req, res) => {
-        // Mengambil parameter dari query string
-        const { message, format } = req.query;
-
-        // Response berdasarkan parameter
-        const response = {
-            status: true,
-            message: message || "Default message",
-            timestamp: new Date().toISOString()
-        };
-
-        // Jika format=json, kirim sebagai JSON
-        if (format === "json") {
-            res.json(response);
-        } else {
-            // Untuk format lain atau default
-            res.json(response);
-        }
-    });
-
-    // POST /post - Menambahkan data
-    app.post("/post", (req, res) => {
-        const { text } = req.body;
-
-        if (!text) {
+    app.post("/post",async (req, res) => {
+        if (!req.body) {
             return res.status(400).json({
                 status: false,
-                error: "text is required"
+                error: "body is required"
             });
         }
+        
+        const ai = await askAI(req.body);
 
-        res.json({
-            status: true,
-            receivedText: text,
-            timestamp: new Date().toISOString()
-        });
+        res.json(ai);
     });
 }
 
