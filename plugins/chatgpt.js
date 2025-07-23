@@ -28,4 +28,4 @@ function router(app, routes = []) {
   });
 }
 
-module.exports = productPlugin;
+module.exports = router;
