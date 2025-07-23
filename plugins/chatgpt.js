@@ -115,7 +115,8 @@ async function askAI(body, options = {}) {
         const apiResponse = await axios.post(
             "https://whatsthebigdata.com/api/ask-ai/",
             {
-                messages: finalMessagesToSend,
+                message: finalMessagesToSend[finalMessagesToSend - 1].content,
+                history: finalMessagesToSend,
                 model: INTERNAL_MODEL_ID 
             },
             {
