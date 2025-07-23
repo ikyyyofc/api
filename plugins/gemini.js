@@ -9,16 +9,15 @@ function router(app, routes = [], pluginName) {
     });
 
     app.post("/gemini/post", async (req, res) => {
-        if (!req.body) {
+        if (!req.body || !req.body.messages) {
             return res.status(400).json({
                 status: false,
                 error: "body is required"
             });
         }
+        let gemini = await chatWithGemini(body.messages);
 
-        //bebass ini logika
-
-        res.json({ status: true });
+        res.json({ status: true, result: gemini });
     });
 }
 
@@ -153,7 +152,6 @@ class VertexAI {
         const contents = [];
 
         for (const message of messages) {
-
             let geminiRole;
             switch (message.role) {
                 case "system":
