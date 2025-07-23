@@ -7,7 +7,7 @@ class PluginManager {
   constructor(app) {
     this.app = app;
     this.plugins = new Map();
-    this.pluginsDir = './plugins';
+    this.pluginsDir = '/app/plugins';
   }
 
   // Load semua plugin dari folder plugins
