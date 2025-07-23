@@ -116,7 +116,7 @@ async function askAI(body, options = {}) {
             "https://whatsthebigdata.com/api/ask-ai/",
             {
                 message: finalMessagesToSend[finalMessagesToSend - 1].content,
-                history: finalMessagesToSend,
+                history: finalMessagesToSend.slice(0, -1),
                 model: INTERNAL_MODEL_ID 
             },
             {
