@@ -1,4 +1,4 @@
-// public/script.js
+// public/script.js (versi lengkap yang diperbarui)
 document.addEventListener('DOMContentLoaded', function() {
     const pluginsContainer = document.getElementById('plugins-container');
     const endpointsContainer = document.getElementById('endpoints-container');
@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const endpointInput = document.getElementById('endpoint');
     const bodyInput = document.getElementById('body-input');
     const requestBody = document.getElementById('request-body');
+    const queryParams = document.getElementById('query-params');
     const sendButton = document.getElementById('send-request');
     const responseOutput = document.getElementById('response-output');
-    const queryParamsContainer = document.getElementById('query-params-container');
 
     // Memuat data plugin dan endpoint
     fetch('/api/plugins')
@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const method = methodSelect.value;
         let url = endpointInput.value.trim();
         const body = requestBody.value.trim();
+        const queryParamsValue = queryParams.value.trim();
         
         // Validasi input
         if (!url) {
@@ -106,6 +107,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Tambahkan prefix / jika tidak ada
         if (!url.startsWith('/')) {
             url = '/' + url;
+        }
+        
+        // Tambahkan parameter query ke URL jika ada
+        if (queryParamsValue && method === 'GET') {
+            const params = queryParamsValue.split('\n')
+                .map(line => line.trim())
+                .filter(line => line)
+                .reduce((acc, line) => {
+                    const [key, value] = line.split('=');
+                    if (key && value !== undefined) {
+                        acc[key.trim()] = value.trim();
+                    }
+                    return acc;
+                }, {});
+            
+            const searchParams = new URLSearchParams(params);
+            url += '?' + searchParams.toString();
         }
         
         // Siapkan opsi fetch
