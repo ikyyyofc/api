@@ -25,7 +25,7 @@ function router(app, routes = [], pluginName) {
             "region=" + req.query.region
         );
 
-        res.json(trend.data);
+        res.json(trend.data.data);
     });
 }
 
