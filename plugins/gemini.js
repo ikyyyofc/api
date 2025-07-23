@@ -34,7 +34,7 @@ function router(app, routes = [], pluginName) {
             },
             {
                 role: "user",
-                content: "mbou"
+                content: req.query.text
             }
         ]);
 
