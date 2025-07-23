@@ -9,7 +9,7 @@ function router(app, routes = [], pluginName) {
     });
 
     app.post("/gemini/post", async (req, res) => {
-        if (!req.body || !req.body.text) {
+        if (!req.body || !req.body.messages) {
             return res.status(400).json({
                 status: false,
                 error: "body is required"
