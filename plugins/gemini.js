@@ -266,7 +266,7 @@ class VertexAI {
     }
 }
 
-let chatWithGPT = async (data_msg, newMsg) => {
+let chatWithGemini = async (data_msg, newMsg) => {
     try {
         const v = new VertexAI();
         const resp = await v.chatWithMessages(data_msg, {
