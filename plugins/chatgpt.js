@@ -25,8 +25,8 @@ function router(app, routes = [], pluginName) {
 }
 
 module.exports = router;
-const INTERNAL_MODEL_ID = "claude-3-sonnet"; 
-const DISPLAYED_MODEL_NAME = "claude-3-5-sonnet"; 
+const INTERNAL_MODEL_ID = "claude-3-sonnet";
+const DISPLAYED_MODEL_NAME = "claude-3-5-sonnet";
 async function askAI(body, options = {}) {
     const { model, messages, max_tokens, temperature, user, ...rest } =
         body || {};
@@ -117,7 +117,7 @@ async function askAI(body, options = {}) {
             {
                 message: finalMessagesToSend[finalMessagesToSend - 1].content,
                 history: finalMessagesToSend.slice(0, -1),
-                model: INTERNAL_MODEL_ID 
+                model: INTERNAL_MODEL_ID
             },
             {
                 headers: {
@@ -127,11 +127,10 @@ async function askAI(body, options = {}) {
                     "user-agent":
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
                 },
-                
-                timeout: options.timeout || 10000 
+
+                timeout: options.timeout || 10000
             }
         );
-
 
         const aiTextResponse = apiResponse.data?.text;
 
