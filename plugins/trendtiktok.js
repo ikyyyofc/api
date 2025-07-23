@@ -51,7 +51,7 @@ function router(app, routes = [], pluginName) {
                 );
         }
 
-        res.json(trend.data.data);
+        res.json({ status: true, result: img_url });
     });
 }
 
