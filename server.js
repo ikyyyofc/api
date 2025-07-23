@@ -1,25 +1,50 @@
 // server.js
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 class PluginBasedAPI {
   constructor() {
     this.app = express();
     this.app.use(express.json());
-    this.app.use(express.static(path.join(__dirname, 'public'))); // Menyajikan file statis
+    this.app.use(express.static(path.join(__dirname, 'public')));
     this.plugins = [];
-    this.routes = []; // Menyimpan informasi route
+    this.routes = [];
   }
 
-  // Method untuk menambahkan plugin
-  addPlugin(plugin) {
-    if (typeof plugin === 'function') {
-      plugin(this.app, this.routes); // Melewatkan routes array ke plugin
-      this.plugins.push(plugin.name || 'Anonymous Plugin');
-      console.log(`Plugin added: ${plugin.name || 'Anonymous Plugin'}`);
-    } else {
-      console.error('Invalid plugin: Plugin must be a function');
+  // Method untuk secara otomatis memuat semua plugin dari folder plugins
+  loadPlugins() {
+    const pluginsDir = path.join(__dirname, 'plugins');
+    
+    // Cek apakah folder plugins ada
+    if (!fs.existsSync(pluginsDir)) {
+      console.log('Plugins directory not found');
+      return;
     }
+    
+    // Baca semua file dalam folder plugins
+    const pluginFiles = fs.readdirSync(pluginsDir);
+    
+    pluginFiles.forEach(file => {
+      // Hanya memuat file .js
+      if (path.extname(file) === '.js') {
+        try {
+          const pluginPath = path.join(pluginsDir, file);
+          const plugin = require(pluginPath);
+          
+          // Pastikan plugin adalah fungsi
+          if (typeof plugin === 'function') {
+            plugin(this.app, this.routes);
+            this.plugins.push(plugin.name || file);
+            console.log(`Plugin loaded: ${plugin.name || file}`);
+          } else {
+            console.warn(`Invalid plugin in file: ${file}. Plugin must be a function.`);
+          }
+        } catch (error) {
+          console.error(`Error loading plugin ${file}:`, error.message);
+        }
+      }
+    });
   }
 
   // Method untuk menjalankan server
