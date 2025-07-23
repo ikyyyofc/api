@@ -19,7 +19,7 @@ function router(app, routes = [], pluginName) {
 
         res.json({ status: true, result: gemini });
     });
-    app.get("/gemini/tt", async (req, res) => {
+    app.post("/gemini/tt", async (req, res) => {
         if (!req.query.text) {
             return res.status(400).json({
                 status: false,
