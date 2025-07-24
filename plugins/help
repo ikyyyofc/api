@@ -2,11 +2,11 @@ function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName,
         endpoints: [
-            { method: "POST", path: "/post", description: "Post text data" }
+            { method: "<GET/POST>", path: "/<endpoint>", description: "<description>" }
         ]
     });
 
-    app.post("/post", async (req, res) => {
+    app.<method>("/<endpoint>", async (req, res) => {
         if (!req.body) {
             return res.status(400).json({
                 status: false,
