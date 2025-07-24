@@ -20,6 +20,7 @@ function router(app, routes = [], pluginName) {
             aspect_ratio: "9:16"
         });
 
+        res.setHeader("Content-Type", "image/png");
         res.send(Buffer.from(resp[0].bytesBase64Encoded, "base64"));
     });
 }
