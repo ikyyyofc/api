@@ -3,7 +3,7 @@ function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName,
         endpoints: [
-            { method: "GET", path: "/aiimage", description: "<description>" }
+            { method: "POST", path: "/aiimage", description: "<description>" }
         ]
     });
 
