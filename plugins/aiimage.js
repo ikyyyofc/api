@@ -101,10 +101,3 @@ class VertexAI {
         return r.data.predictions;
     }
 }
-
-const v = new VertexAI();
-const resp = await v.image(`A handsome 18-year-old Indonesian male villager, featuring a medium, well-proportioned build and healthy, warm tan skin, stands with a deeply concerned expression in a dimly lit community hall within a remote village. His strong, masculine face, defined by a sharp jawline, prominent cheekbones, and deep almond-shaped black eyes under thick black eyebrows, is intently focused on a crackling old radio where news of a recent tragic incident involving a TNI officer in North Sumatra is being reported. He has a modern low fade haircut, short and neatly textured on top, and wears a fitted plain black cotton t-shirt that subtly highlights his natural build, paired with plain black jeans and simple black sneakers. The air is thick with a palpable sense of shared unease and disbelief among the few other villagers subtly visible in the background, their faces also etched with worry, all under the soft glow of a single hanging lamp, casting long shadows that emphasize the gravity of the breaking news. This image is rendered in a highly detailed, photorealistic 3D style.`);
-
-for (let x of resp) {
-return conn.sendFile(m.chat, Buffer.from(x.bytesBase64Encoded, "base64"), "", "gawok", m)
-}
