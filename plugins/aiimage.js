@@ -7,8 +7,8 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    app.get("/aiimage", async (req, res) => {
-        let q = req.query;
+    app.post("/aiimage", async (req, res) => {
+        let q = req.body;
         if (!q.prompt)
             return res.json({
                 status: false,
@@ -16,6 +16,7 @@ function router(app, routes = [], pluginName) {
             });
         const v = new VertexAI();
         const resp = await v.image(q.prompt, {
+            model: "imagen-4.0-ultra-generate-preview-06-06",
             aspect_ratio: "9:16"
         });
 
