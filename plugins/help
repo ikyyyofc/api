@@ -7,14 +7,7 @@ function router(app, routes = [], pluginName) {
     });
 
     app.<method>("/<endpoint>", async (req, res) => {
-        if (!req.body) {
-            return res.status(400).json({
-                status: false,
-                error: "body is required"
-            });
-        }
 
-        //bebass ini logika
 
         res.json({status: true});
     });
