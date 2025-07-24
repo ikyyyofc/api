@@ -16,7 +16,6 @@ function router(app, routes = [], pluginName) {
             });
         const v = new VertexAI();
         const resp = await v.image(q.prompt, {
-            model: "imagen-3.0-capability-001",
             aspect_ratio: "9:16"
         });
 
