@@ -8,8 +8,17 @@ function router(app, routes = [], pluginName) {
     });
 
     app.get("/aiimage", async (req, res) => {
+        let q = req.query;
+        if (!q.prompt)
+            return res.json({
+                status: false,
+                mess: "gunakan parameter prompt"
+            });
         const v = new VertexAI();
-        const resp = await v.image();
+        const resp = await v.image(q.prompt, {
+            model: "imagen-4.0-ultra-generate-preview-06-06",
+            aspect_ratio: "9:16"
+        });
 
         res.send(Buffer.from(resp[0].bytesBase64Encoded, "base64"));
     });
