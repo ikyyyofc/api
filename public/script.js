@@ -145,51 +145,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Tampilkan loading
-        responseOutput.textContent = 'Loading...';
+        responseOutput.innerHTML = '<p>Loading...</p>';
         
         // Kirim request
         fetch(url, fetchOptions)
-            .then(response => {
-                // Cek apakah respons adalah binary content (gambar/video)
-                const contentType = response.headers.get('content-type');
+            .then(async response => {
+                // Simpan content-type dari header
+                const contentType = response.headers.get('content-type') || '';
                 
+                // Cek apakah respons adalah binary content (gambar/video)
                 if (contentType.includes('image/') || contentType.includes('video/')) {
                     // Jika ini adalah gambar/video, baca sebagai blob
-                    return response.blob();
+                    const blob = await response.blob();
+                    return {
+                        type: 'binary',
+                        data: blob,
+                        contentType: contentType
+                    };
                 } else {
                     // Untuk JSON atau teks lainnya
-                    return response.json().catch(() => response.text());
+                    try {
+                        const jsonData = await response.json();
+                        return {
+                            type: 'json',
+                            data: jsonData,
+                            status: response.status
+                        };
+                    } catch (e) {
+                        // Jika bukan JSON, coba baca sebagai teks
+                        const textData = await response.text();
+                        return {
+                            type: 'text',
+                            data: textData,
+                            status: response.status
+                        };
+                    }
                 }
             })
-            .then(data => {
-                // Tangani respons berdasarkan jenisnya
-                const contentType = response.headers.get('content-type');
+            .then(result => {
+                // Bersihkan output sebelumnya
+                responseOutput.innerHTML = '';
                 
-                if (contentType.includes('image/')) {
-                    // Untuk gambar
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(data);
-                    img.alt = 'Image Response';
-                    responseOutput.innerHTML = ''; // Bersihkan output sebelumnya
-                    responseOutput.appendChild(img);
-                } else if (contentType.includes('video/')) {
-                    // Untuk video
-                    const video = document.createElement('video');
-                    video.src = URL.createObjectURL(data);
-                    video.controls = true;
-                    video.alt = 'Video Response';
-                    responseOutput.innerHTML = ''; // Bersihkan output sebelumnya
-                    responseOutput.appendChild(video);
-                } else if (typeof data === 'object') {
+                // Tangani respons berdasarkan jenisnya
+                if (result.type === 'binary') {
+                    if (result.contentType.includes('image/')) {
+                        // Untuk gambar
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(result.data);
+                        img.alt = 'Image Response';
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                        responseOutput.appendChild(img);
+                    } else if (result.contentType.includes('video/')) {
+                        // Untuk video
+                        const video = document.createElement('video');
+                        video.src = URL.createObjectURL(result.data);
+                        video.controls = true;
+                        video.style.maxWidth = '100%';
+                        video.style.height = 'auto';
+                        responseOutput.appendChild(video);
+                    }
+                } else if (result.type === 'json') {
                     // Untuk JSON
-                    responseOutput.textContent = JSON.stringify(data, null, 2);
-                } else {
+                    const pre = document.createElement('pre');
+                    pre.textContent = JSON.stringify(result.data, null, 2);
+                    responseOutput.appendChild(pre);
+                } else if (result.type === 'text') {
                     // Untuk teks lainnya
-                    responseOutput.textContent = data;
+                    const pre = document.createElement('pre');
+                    pre.textContent = result.data;
+                    responseOutput.appendChild(pre);
                 }
             })
             .catch(error => {
-                responseOutput.textContent = `Error: ${error.message}`;
+                responseOutput.innerHTML = `<p>Error: ${error.message}</p>`;
                 console.error('API request error:', error);
             });
     });
