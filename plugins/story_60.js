@@ -111,7 +111,7 @@ function router(app, routes = [], pluginName) {
                 .map((item, index) => ({
                     part: item.part,
                     prompt: item.prompt,
-                    url: videoResults[index].data.video_url // Ambil URL dari hasil txt2vid
+                    url: videoResults[index] // Ambil URL dari hasil txt2vid
                 }))
                 .sort((a, b) => a.part - b.part); // Urutkan berdasarkan 'part'
 
