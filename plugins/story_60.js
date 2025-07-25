@@ -14,11 +14,15 @@ function router(app, routes = [], pluginName) {
     });
 
     app.post("/create-story", async (req, res) => {
-      let q = req.body
+        let q = req.body;
+        if (!q || !q.data) return res.json({ status: false });
+        let get_json = JSON.parse(q.data);
+        let vid_res = [];
+        for (let x of get_json.result) {
+            let gen = await txt2vid(x.prompt);
+            vid_res.push({ url: gen.data.video_url });
+        }
         res.json({ status: true, task: "id-task" });
-    });
-    app.post("/create-story/get-detail", async (req, res) => {
-        res.json({ status: true });
     });
 }
 
