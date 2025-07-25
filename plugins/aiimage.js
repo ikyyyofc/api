@@ -24,7 +24,7 @@ function router(app, routes = [], pluginName) {
         ).data;
 
         res.setHeader("Content-Type", "image/png");
-        res.send(Buffer.from(resp[0].bytesBase64Encoded, "base64"));
+        res.send(resp);
     });
 }
 
