@@ -70,6 +70,11 @@ function router(app, routes = [], pluginName) {
                 method: "POST",
                 path: "/create-story",
                 description: "create story"
+            },
+            {
+                method: "GET",
+                path: "/create-story-get",
+                description: "get data"
             }
         ]
     });
@@ -152,7 +157,9 @@ function router(app, routes = [], pluginName) {
                 .map((item, index) => ({
                     part: item.part,
                     prompt: item.prompt,
-                    name: videoResults[index] // Ambil URL dari hasil txt2vid
+                    url:
+                        "https://ikyy-api.hf.space/create-story-get?name=" +
+                        videoResults[index] // Ambil URL dari hasil txt2vid
                 }))
                 .sort((a, b) => a.part - b.part); // Urutkan berdasarkan 'part'
 
@@ -172,7 +179,8 @@ function router(app, routes = [], pluginName) {
     });
 
     app.get(`/create-story-get`, async (req, res) => {
-        if (!req.query.name) return res.json({ status: false, mess: "name required" });
+        if (!req.query.name)
+            return res.json({ status: false, mess: "name required" });
 
         // 1. Temukan indeksnya
         // Kita gunakan method 'findIndex()' yang ada di array JavaScript.
@@ -188,7 +196,7 @@ function router(app, routes = [], pluginName) {
             res.setHeader("Content-Type", "image/png");
             res.send(buffer_url[index].buffer);
         } else {
-            res.json({status: false, mess: "not found"})
+            res.json({ status: false, mess: "not found" });
         }
     });
 }
