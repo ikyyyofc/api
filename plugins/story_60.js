@@ -4,7 +4,7 @@ const crypto = require("crypto");
 // --- Konfigurasi ---
 const REQUEST_DELAY_MS = 5000; // Delay antar permintaan awal (milidetik)
 const MAX_RETRIES = 10;        // Jumlah maksimum percobaan ulang untuk setiap permintaan txt2vid
-const RETRY_DELAY_MS = 2500;  // Delay antar percobaan ulang (milidetik)
+const RETRY_DELAY_MS = 5000;  // Delay antar percobaan ulang (milidetik)
 // --- Akhir Konfigurasi ---
 
 // Fungsi utilitas untuk membuat delay
