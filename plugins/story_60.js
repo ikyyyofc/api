@@ -188,7 +188,7 @@ function router(app, routes = [], pluginName) {
             res.setHeader("Content-Type", "image/png");
             res.send(buffer_url[index].buffer);
         } else {
-            console.log("Nama 'yanti' tidak ditemukan dalam array data.");
+            res.json({status: false, mess: "not found"})
         }
     });
 }
