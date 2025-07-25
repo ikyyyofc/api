@@ -184,19 +184,24 @@ async function txt2vid(prompt) {
             },
             { responseType: "arraybuffer" }
         );
+        let name = generateRandomPngFilename();
+        buffer_url.push({ name: name, buffer: req.data });
 
-        return req.data;
+        return name;
     } catch (error) {
         throw new Error(error.message);
     }
 }
 
 function generateRandomPngFilename(length = 50) {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321';
-  let result = '';
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result + '.png';
+    const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321";
+    let result = "";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(
+            Math.floor(Math.random() * charactersLength)
+        );
+    }
+    return result + ".png";
 }
