@@ -11,21 +11,62 @@ function router(app, routes = [], pluginName) {
             }
         ]
     });
+    // Pastikan axios sudah diimpor
+    // import axios from 'axios';
+    // atau
+    // const axios = require('axios');
+
     async function get_trend(region) {
-        try {
-            const trend = (await axios.post(
-                "https://tikwm.com/api/feed/list",
-                "region=" + region
-            ));
-            if (trend.data.length) {
-                return trend.data;
-            } else {
-                return get_trend(region);
+        // Loop tak terbatas sampai data ditemukan
+        while (true) {
+            try {
+                // 1. Gunakan URL yang benar tanpa spasi
+                // 2. Kirim data sebagai objek
+                const response = await axios.post(
+                    "https://tikwm.com/api/feed/list",
+                    { region: region }
+                );
+
+                // 3. Periksa struktur respons yang sebenarnya.
+                //    KODE INI MEMBUTUHKAN PENYESUAIAN BERDASARKAN DOKUMENTASI ATAU HASIL NYATA DARI API.
+                //    Contoh umum: response.data = { code: 0, data: [...], msg: "..." }
+                //    Asumsikan data yang diinginkan ada di response.data.data dan itu adalah array
+                if (
+                    response.data &&
+                    response.data.data &&
+                    response.data.data.length > 0
+                ) {
+                    // Kembalikan data yang ditemukan
+                    return response.data.data;
+                } else {
+                    console.log(
+                        "No data received or data is empty. Retrying in 2 seconds..."
+                    );
+                    // Tunggu sebentar sebelum mencoba lagi untuk tidak membanjiri server
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            } catch (error) {
+                // Tangkap error jaringan atau error lainnya dari axios
+                console.error("Error fetching trend:", error.message);
+                console.log("Retrying in 2 seconds...");
+                // Tunggu sebentar sebelum mencoba lagi
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
-        } catch {
-            return get_trend(region);
         }
     }
+
+    // Contoh penggunaan (dalam fungsi async):
+    // (async () => {
+    //   try {
+    //     const trends = await get_trend('ID');
+    //     console.log(trends);
+    //   } catch (err) {
+    //      // Ini hanya akan terjadi jika ada error yang dilempar di luar `get_trend`,
+    //      // yang tidak mungkin dalam implementasi saat ini karena loop tak terbatas.
+    //     console.error("Unexpected error:", err);
+    //   }
+    // })();
+
     app.get("/trendtiktok", async (req, res) => {
         if (!req.query.region) {
             return res.status(400).json({
