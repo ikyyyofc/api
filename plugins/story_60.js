@@ -19,7 +19,7 @@ function router(app, routes = [], pluginName) {
         let get_json = JSON.parse(q.data);
         let vid_res = [];
         for (let x of get_json.result) {
-            let gen = await txt2vid(x.prompt);
+            let gen = await txt2vid(x.prompt, "9:16");
             vid_res.push({ url: gen.data.video_url });
         }
         res.json({ status: true, result: vid_res });
