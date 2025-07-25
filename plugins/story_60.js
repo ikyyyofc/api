@@ -165,7 +165,3 @@ async function txt2vid(prompt) {
         throw new Error(error.message);
     }
 }
-
-// Usage:
-const resp = await txt2video('A pixel-art queen, standing in her grand pixelated throne room, with a sunbeam casting light onto her flowing cape.');
-console.log(resp);
