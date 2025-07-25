@@ -10,7 +10,7 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    app.post("/<endpoint>", async (req, res) => {
+    app.post("/create-story", async (req, res) => {
         res.json({ status: true });
     });
 }
