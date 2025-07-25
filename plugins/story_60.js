@@ -22,7 +22,7 @@ function router(app, routes = [], pluginName) {
             let gen = await txt2vid(x.prompt);
             vid_res.push({ url: gen.data.video_url });
         }
-        res.json({ status: true, task: "id-task" });
+        res.json({ status: true, result: vid_res });
     });
 }
 
