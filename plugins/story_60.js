@@ -173,6 +173,7 @@ function router(app, routes = [], pluginName) {
 }
 
 module.exports = router;
+let buffer_url = [];
 
 async function txt2vid(prompt) {
     try {
@@ -188,4 +189,14 @@ async function txt2vid(prompt) {
     } catch (error) {
         throw new Error(error.message);
     }
+}
+
+function generateRandomPngFilename(length = 50) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result + '.png';
 }
