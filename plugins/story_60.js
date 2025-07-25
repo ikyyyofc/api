@@ -61,7 +61,7 @@ async function txt2vidWithRetry(
 
 // Asumsikan fungsi txt2vid didefinisikan di sini atau diimpor
 // async function txt2vid(prompt, ratio = "16:9") { ... }
-
+let buffer_url = [];
 function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName,
@@ -173,7 +173,6 @@ function router(app, routes = [], pluginName) {
 }
 
 module.exports = router;
-let buffer_url = [];
 
 async function txt2vid(prompt) {
     try {
