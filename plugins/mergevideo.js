@@ -12,7 +12,7 @@ function generateUniqueFilename(prefix = 'temp', extension) {
     return `${prefix}_${timestamp}_${randomString}.${extension}`;
 }
 
-// Fungsi utama untuk menggabungkan foto dan audio menjadi slideshow video
+// Fungsi utama untuk menggabungkan foto dan audio menjadi slideshow video (RESOLUSI 512x912)
 async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 5, transitionDuration = 1) {
     const tempDir = os.tmpdir();
     const photoPaths = [];
@@ -20,8 +20,13 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
     const fadedPhotoPaths = [];  // Paths untuk foto yang sudah ditambahkan fade
     let audioPath = null;
 
+    // === RESOLUSI TARGET ===
+    const targetWidth = 512;
+    const targetHeight = 912;
+    // ======================
+
     try {
-        console.log(`[photoSlideshow] Memulai proses slideshow...`);
+        console.log(`[photoSlideshow] Memulai proses slideshow (Resolusi: ${targetWidth}x${targetHeight})...`);
         console.log(`[photoSlideshow] Photo URLs: ${photoUrls.length}`);
         console.log(`[photoSlideshow] Audio URL: ${audioUrl}`);
 
@@ -36,13 +41,15 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
         });
         await Promise.all(downloadPhotoPromises);
 
-        // 2. Resize semua foto ke resolusi yang konsisten (misal 1920x1080)
+        // 2. Resize semua foto ke resolusi yang konsisten (512x912)
         // Ini penting agar transisi bekerja dengan baik
         const resizePromises = photoPaths.map(async (inputPath, index) => {
             const resizedPath = path.join(tempDir, generateUniqueFilename(`resized_${index}`, 'png'));
+            // === GUNAKAN RESOLUSI 512x912 ===
             // Gunakan ffmpeg untuk resize dengan padding jika rasio tidak sesuai
-            const resizeCommand = `ffmpeg -y -i "${inputPath}" -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1" "${resizedPath}"`;
-            console.log(`[photoSlideshow] Resizing foto ${index + 1}: ${resizeCommand}`);
+            const resizeCommand = `ffmpeg -y -i "${inputPath}" -vf "scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2,setsar=1" "${resizedPath}"`;
+            // =================================
+            console.log(`[photoSlideshow] Resizing foto ${index + 1} ke ${targetWidth}x${targetHeight}: ${resizeCommand}`);
             await execPromise(resizeCommand);
             resizedPhotoPaths.push(resizedPath);
             return resizedPath;
@@ -52,16 +59,11 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
         // 3. Tambahkan efek fade in dan fade out ke setiap foto
         const fadePromises = resizedPhotoPaths.map(async (inputPath, index) => {
             const fadedPath = path.join(tempDir, generateUniqueFilename(`faded_${index}`, 'mp4'));
-            // Durasi total frame = photoDuration
-            // Fade in duration = transitionDuration / 2
-            // Fade out duration = transitionDuration / 2
-            // Hold duration = photoDuration - transitionDuration
             const fadeInDuration = transitionDuration / 2;
             const fadeOutDuration = transitionDuration / 2;
             const holdDuration = photoDuration - transitionDuration;
 
             // ffmpeg command untuk membuat video pendek dari gambar dengan efek fade
-            // Gunakan filter_complex untuk efek yang lebih presisi
             const fadeCommand = `ffmpeg -y -loop 1 -i "${inputPath}" -vf "fade=t=in:st=0:d=${fadeInDuration},fade=t=out:st=${holdDuration + fadeInDuration}:d=${fadeOutDuration}" -c:v libx264 -t ${photoDuration} -pix_fmt yuv420p "${fadedPath}"`;
             console.log(`[photoSlideshow] Menambahkan fade ke foto ${index + 1}: ${fadeCommand}`);
             await execPromise(fadeCommand);
@@ -77,21 +79,17 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
         console.log(`[photoSlideshow] Audio disimpan di: ${audioPath}`);
 
         // 5. Gabungkan semua video pendek (dengan fade) menjadi satu video
-        // Buat file list untuk ffmpeg concat demuxer
         const listFilePath = path.join(tempDir, generateUniqueFilename('filelist', 'txt'));
         const listContent = fadedPhotoPaths.map(p => `file '${p}'`).join('\n');
         fs.writeFileSync(listFilePath, listContent);
         const concatVideoPath = path.join(tempDir, generateUniqueFilename('concatenated', 'mp4'));
 
-        // Gunakan concat demuxer untuk menggabungkan video
         const concatCommand = `ffmpeg -y -f concat -safe 0 -i "${listFilePath}" -c copy "${concatVideoPath}"`;
         console.log(`[photoSlideshow] Menggabungkan video dengan fade: ${concatCommand}`);
         await execPromise(concatCommand);
         console.log(`[photoSlideshow] Video dengan fade digabungkan: ${concatVideoPath}`);
 
         // 6. Gabungkan video hasil dengan audio
-        // Gunakan -shortest untuk memastikan durasi mengikuti yang terpendek jika audio lebih pendek dari 60 detik
-        // Atau gunakan -t 60 untuk memotong audio jika lebih panjang
         const finalCommand = `ffmpeg -y -i "${concatVideoPath}" -i "${audioPath}" -c:v copy -c:a aac -strict experimental -map 0:v:0 -map 1:a:0 -shortest "${outputPath}"`;
         console.log(`[photoSlideshow] Menggabungkan video dan audio: ${finalCommand}`);
         await execPromise(finalCommand);
@@ -99,7 +97,6 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
 
     } catch (error) {
         console.error('[photoSlideshow] Error saat membuat slideshow:', error.message);
-        // Log stdout/stderr jika ada untuk debugging
         if (error.stdout) console.error('[photoSlideshow] FFmpeg stdout:', error.stdout);
         if (error.stderr) console.error('[photoSlideshow] FFmpeg stderr:', error.stderr);
         throw error;
@@ -113,11 +110,9 @@ async function createSlideshow(photoUrls, audioUrl, outputPath, photoDuration = 
                     console.log(`[photoSlideshow] File sementara dihapus: ${filePath}`);
                 }
             } catch (err) {
-                 // Abaikan error penghapusan, mungkin file sudah dihapus atau digunakan
                 console.warn(`[photoSlideshow] Gagal menghapus file sementara: ${filePath}`, err.message);
             }
         });
-        // Hapus file list khusus jika ada
         try {
              const listFiles = fs.readdirSync(tempDir).filter(fn => fn.startsWith('temp_filelist_') && fn.endsWith('.txt')).map(fn => path.join(tempDir, fn));
              listFiles.forEach(fp => { if (fs.existsSync(fp)) fs.unlinkSync(fp); console.log(`[photoSlideshow] File list sementara dihapus: ${fp}`); });
@@ -133,14 +128,13 @@ function router(app, routes = [], pluginName) {
             {
                 method: "GET",
                 path: "/create-slideshow",
-                description: "Gabungkan 12 foto PNG (URL) dan 1 audio (URL) menjadi 1 video slideshow 60 detik dengan transisi fade. Parameter: photoUrl (comma-separated URLs), audioUrl"
+                description: "Gabungkan 12 foto PNG (URL) dan 1 audio (URL) menjadi 1 video slideshow 60 detik (resolusi 512x912) dengan transisi fade. Parameter: photoUrl (comma-separated URLs), audioUrl"
             }
         ]
     });
 
     app.get("/create-slideshow", async (req, res) => {
         try {
-            // 1. Ambil dan parsing parameter
             const rawPhotoUrls = req.query.photoUrl;
             const audioUrl = req.query.audioUrl;
 
@@ -160,7 +154,6 @@ function router(app, routes = [], pluginName) {
                 });
             }
 
-            // 2. Tentukan path output video
             const outputDir = path.join(__dirname, '..', 'public', 'videos');
             if (!fs.existsSync(outputDir)) {
                 fs.mkdirSync(outputDir, { recursive: true });
@@ -168,17 +161,15 @@ function router(app, routes = [], pluginName) {
             const outputFilename = generateUniqueFilename('slideshow', 'mp4');
             const videoOutputPath = path.join(outputDir, outputFilename);
 
-            // 3. Panggil fungsi createSlideshow
-            console.log(`[photoSlideshow] Memulai pembuatan slideshow...`);
-            await createSlideshow(photoUrls, audioUrl, videoOutputPath, 5, 1); // 5 detik per foto, 1 detik transisi
+            console.log(`[photoSlideshow] Memulai pembuatan slideshow (512x912)...`);
+            // Durasi foto 5 detik, transisi 1 detik tetap
+            await createSlideshow(photoUrls, audioUrl, videoOutputPath, 5, 1);
 
-            // 4. Tentukan URL video hasil
             const videoUrl = `/videos/${outputFilename}`;
 
-            // 5. Kirim respons sukses
             res.json({
                 status: true,
-                message: "Slideshow video berhasil dibuat.",
+                message: "Slideshow video (512x912) berhasil dibuat.",
                 videoUrl: videoUrl
             });
 
@@ -187,7 +178,6 @@ function router(app, routes = [], pluginName) {
             res.status(500).json({
                 status: false,
                 message: "Terjadi kesalahan saat membuat slideshow.",
-                // error: error.message // Hapus atau sembunyikan detail error di produksi
             });
         }
     });
