@@ -16,6 +16,9 @@ function router(app, routes = [], pluginName) {
     app.post("/create-story", async (req, res) => {
         res.json({ status: true });
     });
+    app.post("/create-story/get-detail", async (req, res) => {
+        res.json({ status: true });
+    });
 }
 
 module.exports = router;
