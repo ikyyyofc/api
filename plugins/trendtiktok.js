@@ -11,7 +11,19 @@ function router(app, routes = [], pluginName) {
             }
         ]
     });
-
+    async function get_trend(region) {
+        try {
+            const trend = await axios.post(
+                "https://tikwm.com/api/feed/list",
+                "region=" + region
+            );
+            if (data.data.length) {
+                return data;
+            } else {
+                return trend(region);
+            }
+        } catch {}
+    }
     app.get("/trendtiktok", async (req, res) => {
         if (!req.query.region) {
             return res.status(400).json({
@@ -20,12 +32,8 @@ function router(app, routes = [], pluginName) {
             });
         }
 
-        const trend = await axios.post(
-            "https://tikwm.com/api/feed/list",
-            "region=" + req.query.region
-        );
-
-        res.json(trend.data.data);
+        let trend_data = await get_trend(req.query.region);
+        res.json(trend_data);
     });
     function delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
