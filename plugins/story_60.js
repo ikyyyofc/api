@@ -1,13 +1,41 @@
 const axios = require("axios");
 const crypto = require("crypto");
 
-// Konfigurasi delay (dalam milidetik) antar permintaan
-// Anda bisa menyesuaikan nilai ini (misalnya 500, 1000) tergantung kebutuhan dan toleransi server
-const REQUEST_DELAY_MS = 5000; // Contoh: 200 milidetik
+// --- Konfigurasi ---
+const REQUEST_DELAY_MS = 5000; // Delay antar permintaan awal (milidetik)
+const MAX_RETRIES = 5;        // Jumlah maksimum percobaan ulang untuk setiap permintaan txt2vid
+const RETRY_DELAY_MS = 2500;  // Delay antar percobaan ulang (milidetik)
+// --- Akhir Konfigurasi ---
 
 // Fungsi utilitas untuk membuat delay
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Fungsi pembungkus txt2vid dengan mekanisme retry
+async function txt2vidWithRetry(prompt, ratio = "16:9", maxRetries = MAX_RETRIES) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            // console.log(`[DEBUG] Mencoba txt2vid (Percobaan ${attempt}/${maxRetries}) untuk prompt: ${prompt.substring(0, 30)}...`);
+            const result = await txt2vid(prompt, ratio); // Panggil fungsi txt2vid asli
+            // console.log(`[DEBUG] txt2vid BERHASIL (Percobaan ${attempt}/${maxRetries})`);
+            return result; // Jika berhasil, kembalikan hasil
+        } catch (error) {
+            console.error(`[ERROR] txt2vid GAGAL (Percobaan ${attempt}/${maxRetries}) untuk prompt: ${prompt.substring(0, 30)}... - Error:`, error.message || error);
+            // Jika ini adalah percobaan terakhir, lempar error
+            if (attempt === maxRetries) {
+                console.error(`[ERROR] Semua percobaan untuk prompt '${prompt.substring(0, 30)}...' telah gagal.`);
+                throw new Error(`Gagal setelah ${maxRetries} percobaan: ${error.message || error}`);
+            }
+            // Jika bukan percobaan terakhir, tunggu sejenak sebelum mencoba lagi
+            if (RETRY_DELAY_MS > 0) {
+                // console.log(`[DEBUG] Menunggu ${RETRY_DELAY_MS}ms sebelum mencoba lagi...`);
+                await delay(RETRY_DELAY_MS);
+            }
+        }
+    }
+    // Baris ini seharusnya tidak tercapai karena throw di atas, tapi sebagai jaga-jaga
+    throw new Error("txt2vidWithRetry: Proses retry tidak selesai dengan benar.");
 }
 
 // Asumsikan fungsi txt2vid didefinisikan di sini atau diimpor
@@ -51,7 +79,7 @@ function router(app, routes = [], pluginName) {
                 return res.status(400).json({ status: false, error: "Invalid JSON data provided" });
             }
 
-            // Array untuk menyimpan promise-promise
+            // Array untuk menyimpan promise-promise dengan delay dan retry
             const videoPromisesWithDelay = [];
 
             // Buat promise untuk setiap item, dengan delay sebelum memulai
@@ -59,22 +87,22 @@ function router(app, routes = [], pluginName) {
                 const item = get_json.result[i];
 
                 // Buat sebuah fungsi async yang mengembalikan promise
-                // Ini memungkinkan kita untuk menggunakan await di dalamnya
                 const delayedPromise = (async () => {
-                    // Tunggu delay sebelum memulai permintaan untuk item ini
-                    // Kecuali untuk item pertama (i=0), tidak perlu delay sebelumnya
+                    // Tunggu delay sebelum memulai permintaan untuk item ini (kecuali item pertama)
                     if (i > 0) {
                         await delay(REQUEST_DELAY_MS);
                     }
-                    // Panggil txt2vid setelah delay
-                    return await txt2vid(item.prompt, "9:16");
+                    // Panggil txt2vidWithRetry (bukan txt2vid langsung) untuk item ini
+                    // Ini akan mencoba ulang secara otomatis jika terjadi error
+                    return await txt2vidWithRetry(item.prompt, "9:16", MAX_RETRIES);
                 })();
 
                 // Tambahkan promise yang telah 'dijadwalkan' ke array
                 videoPromisesWithDelay.push(delayedPromise);
             }
 
-            // Tunggu semua promise selesai (termasuk delay-nya)
+            // Tunggu semua promise selesai (termasuk delay dan retry-nya)
+            // Jika suatu promise gagal setelah semua retry, Promise.all akan menolak
             const videoResults = await Promise.all(videoPromisesWithDelay);
 
             // Gabungkan hasil dengan data input berdasarkan index untuk menjaga urutan relatif
@@ -91,69 +119,31 @@ function router(app, routes = [], pluginName) {
             res.json({ status: true, result: combinedAndSortedResults });
 
         } catch (error) {
+            // Error ini bisa berasal dari:
+            // - Validasi awal
+            // - Parsing JSON
+            // - Salah satu dari txt2vidWithRetry yang gagal setelah semua percobaan
             console.error("Error processing /create-story request:", error);
-            res.status(500).json({ status: false, error: "An error occurred while creating the story." });
+            // Kirim pesan error yang lebih informatif jika memungkinkan
+            const errorMessage = error.message || "An error occurred while creating the story.";
+            res.status(500).json({ status: false, error: errorMessage });
         }
     });
 }
 
 module.exports = router;
 
-async function txt2vid(prompt, ratio = '16:9') {
-    try {
-        const _ratio = ['16:9', '9:16', '1:1', '4:3', '3:4'];
-        
-        if (!prompt) throw new Error('Prompt is required');
-        if (!_ratio.includes(ratio)) throw new Error(`Available ratios: ${_ratio.join(', ')}`);
-        
-        const { data: cf } = await axios.get('https://api.nekorinn.my.id/tools/rynn-stuff', {
-            params: {
-                mode: 'turnstile-min',
-                siteKey: '0x4AAAAAAATOXAtQtziH-Rwq',
-                url: 'https://www.yeschat.ai/features/text-to-video-generator',
-                accessKey: 'a40fc14224e8a999aaf0c26739b686abfa4f0b1934cda7fa3b34522b0ed5125d'
-            }
-        });
-        
-        const uid = crypto.createHash('md5').update(Date.now().toString()).digest('hex');
-        const { data: task } = await axios.post('https://aiarticle.erweima.ai/api/v1/secondary-page/api/create', {
-            prompt: prompt,
-            imgUrls: [],
-            quality: '540p',
-            duration: 5,
-            autoSoundFlag: false,
-            soundPrompt: '',
-            autoSpeechFlag: false,
-            speechPrompt: '',
-            speakerId: 'Auto',
-            aspectRatio: ratio,
-            secondaryPageId: 388,
-            channel: 'PIXVERSE',
-            source: 'yeschat.ai',
-            type: 'features',
-            watermarkFlag: false,
-            privateFlag: false,
-            isTemp: true,
-            vipFlag: false
-        }, {
-            headers: {
-                uniqueid: uid,
-                verify: cf.result.token
-            }
-        });
-        
-        while (true) {
-            const { data } = await axios.get(`https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`, {
-                headers: {
-                    uniqueid: uid,
-                    verify: cf.result.token
-                }
-            });
-            
-            if (data.data.state === 'success') return JSON.parse(data.data.completeData);
-            await new Promise(res => setTimeout(res, 1000));
-        }
-    } catch (error) {
-        throw new Error(error.message);
-    }
+// Placeholder untuk fungsi txt2vid (diasumsikan sudah ada definisinya)
+/*
+async function txt2vid(prompt, ratio = "16:9") {
+    // ... implementasi txt2vid asli ...
+    // Simulasi error acak untuk testing:
+    // if (Math.random() < 0.7) { // 70% kemungkinan error
+    //    throw new Error("Simulated API Error");
+    // }
+    // return { data: { video_url: `http://example.com/video_${prompt.slice(0, 5)}.mp4` } };
 }
+*/
+
+// Ekspor fungsi utilitas jika diperlukan di tempat lain
+// module.exports = { router, delay, txt2vidWithRetry };
