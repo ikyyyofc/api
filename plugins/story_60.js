@@ -21,12 +21,10 @@ function router(app, routes = [], pluginName) {
             let q = req.body;
             // Validasi awal
             if (!q || !q.data) {
-                return res
-                    .status(400)
-                    .json({
-                        status: false,
-                        error: "Missing data in request body"
-                    });
+                return res.status(400).json({
+                    status: false,
+                    error: "Missing data in request body"
+                });
             }
 
             let get_json;
@@ -35,12 +33,10 @@ function router(app, routes = [], pluginName) {
                 get_json = JSON.parse(q.data);
                 // Validasi struktur data
                 if (!Array.isArray(get_json.result)) {
-                    return res
-                        .status(400)
-                        .json({
-                            status: false,
-                            error: "Invalid data format: 'result' should be an array"
-                        });
+                    return res.status(400).json({
+                        status: false,
+                        error: "Invalid data format: 'result' should be an array"
+                    });
                 }
                 // Validasi bahwa setiap item memiliki 'part' dan 'prompt'
                 // Anda bisa menambahkan validasi lebih lanjut jika diperlukan
@@ -50,21 +46,17 @@ function router(app, routes = [], pluginName) {
                         typeof item.prompt === "string"
                 );
                 if (!isValidFormat) {
-                    return res
-                        .status(400)
-                        .json({
-                            status: false,
-                            error: "Invalid item format in 'result' array. Each item must have 'part' (number) and 'prompt' (string)."
-                        });
+                    return res.status(400).json({
+                        status: false,
+                        error: "Invalid item format in 'result' array. Each item must have 'part' (number) and 'prompt' (string)."
+                    });
                 }
             } catch (parseError) {
                 console.error("JSON Parse Error:", parseError); // Log kesalahan parsing
-                return res
-                    .status(400)
-                    .json({
-                        status: false,
-                        error: "Invalid JSON data provided"
-                    });
+                return res.status(400).json({
+                    status: false,
+                    error: "Invalid JSON data provided"
+                });
             }
 
             // Gunakan Promise.all untuk menjalankan semua txt2vid secara paralel
