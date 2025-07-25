@@ -170,6 +170,11 @@ function router(app, routes = [], pluginName) {
             res.status(500).json({ status: false, error: errorMessage });
         }
     });
+
+    app.get(`/create-story-get`, async (req, res) => {
+      if (!req.query.name) return res.json({status: false})
+      
+    });
 }
 
 module.exports = router;
