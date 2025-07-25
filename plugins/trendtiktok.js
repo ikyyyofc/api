@@ -24,7 +24,7 @@ function router(app, routes = [], pluginName) {
                 // 2. Kirim data sebagai objek
                 const response = await axios.post(
                     "https://tikwm.com/api/feed/list",
-                    { region: region }
+                    `region=${region}`
                 );
 
                 // 3. Periksa struktur respons yang sebenarnya.
