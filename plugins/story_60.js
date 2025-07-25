@@ -174,12 +174,18 @@ function router(app, routes = [], pluginName) {
     app.get(`/create-story-get`, async (req, res) => {
         if (!req.query.name) return res.json({ status: false });
 
-        if (buffer_url.some(item => item.name === req.query.name)) {
-            console.log("Ya, 'asep' ada di dalam array!");
-            // Lakukan sesuatu di sini jika 'asep' ditemukan
+        // 1. Temukan indeksnya
+        // Kita gunakan method 'findIndex()' yang ada di array JavaScript.
+        // Method ini akan mencari elemen pertama yang memenuhi kondisi yang kita berikan.
+        const index = buffer_url.findIndex(item => item.name === req.query.name);
+
+        // 2. Periksa apakah nama "yanti" ditemukan
+        // Jika 'findIndex()' tidak menemukan elemen yang cocok, dia akan mengembalikan nilai -1.
+        // Jadi, kita perlu memeriksa apakah 'index' bukan -1.
+        if (index !== -1) {
+            data[index].kelas = 7;
         } else {
-            console.log("Tidak, 'asep' tidak ada di dalam array.");
-            // Lakukan sesuatu yang lain jika 'asep' tidak ditemukan
+            console.log("Nama 'yanti' tidak ditemukan dalam array data.");
         }
     });
 }
