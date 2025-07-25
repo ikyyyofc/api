@@ -14,6 +14,7 @@ function router(app, routes = [], pluginName) {
     });
 
     app.post("/create-story", async (req, res) => {
+      let q = req.body
         res.json({ status: true, task: "id-task" });
     });
     app.post("/create-story/get-detail", async (req, res) => {
