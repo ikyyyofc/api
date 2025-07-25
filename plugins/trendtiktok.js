@@ -20,9 +20,11 @@ function router(app, routes = [], pluginName) {
             if (trend.data.length) {
                 return trend.data;
             } else {
-                return trend(region);
+                return get_trend(region);
             }
-        } catch {}
+        } catch {
+            return get_trend(region);
+        }
     }
     app.get("/trendtiktok", async (req, res) => {
         if (!req.query.region) {
