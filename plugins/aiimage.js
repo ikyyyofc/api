@@ -16,7 +16,7 @@ function router(app, routes = [], pluginName) {
             });
         const resp = (
             await axios.get(
-                `https://api.nekorinn.my.id/ai-img/ai4chat?text=${q.prompt}&ratio=9%3A16`,
+                `https://api.nekorinn.my.id/ai-img/ai4chat?text=${encodeURIComponent(q.prompt)}&ratio=9%3A16`,
                 { responseType: "arraybuffer" }
             )
         ).data;
