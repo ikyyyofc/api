@@ -172,7 +172,7 @@ function router(app, routes = [], pluginName) {
     });
 
     app.get(`/create-story-get`, async (req, res) => {
-        if (!req.query.name) return res.json({ status: false });
+        if (!req.query.name) return res.json({ status: false, mess: "name required" });
 
         // 1. Temukan indeksnya
         // Kita gunakan method 'findIndex()' yang ada di array JavaScript.
