@@ -133,17 +133,65 @@ function router(app, routes = [], pluginName) {
 
 module.exports = router;
 
-// Placeholder untuk fungsi txt2vid (diasumsikan sudah ada definisinya)
-/*
-async function txt2vid(prompt, ratio = "16:9") {
-    // ... implementasi txt2vid asli ...
-    // Simulasi error acak untuk testing:
-    // if (Math.random() < 0.7) { // 70% kemungkinan error
-    //    throw new Error("Simulated API Error");
-    // }
-    // return { data: { video_url: `http://example.com/video_${prompt.slice(0, 5)}.mp4` } };
+async function txt2vid(prompt, ratio = '16:9') {
+    try {
+        const _ratio = ['16:9', '9:16', '1:1', '4:3', '3:4'];
+        
+        if (!prompt) throw new Error('Prompt is required');
+        if (!_ratio.includes(ratio)) throw new Error(`Available ratios: ${_ratio.join(', ')}`);
+        
+        const { data: cf } = await axios.get('https://api.nekorinn.my.id/tools/rynn-stuff', {
+            params: {
+                mode: 'turnstile-min',
+                siteKey: '0x4AAAAAAATOXAtQtziH-Rwq',
+                url: 'https://www.yeschat.ai/features/text-to-video-generator',
+                accessKey: 'a40fc14224e8a999aaf0c26739b686abfa4f0b1934cda7fa3b34522b0ed5125d'
+            }
+        });
+        
+        const uid = crypto.createHash('md5').update(Date.now().toString()).digest('hex');
+        const { data: task } = await axios.post('https://aiarticle.erweima.ai/api/v1/secondary-page/api/create', {
+            prompt: prompt,
+            imgUrls: [],
+            quality: '540p',
+            duration: 5,
+            autoSoundFlag: false,
+            soundPrompt: '',
+            autoSpeechFlag: false,
+            speechPrompt: '',
+            speakerId: 'Auto',
+            aspectRatio: ratio,
+            secondaryPageId: 388,
+            channel: 'PIXVERSE',
+            source: 'yeschat.ai',
+            type: 'features',
+            watermarkFlag: false,
+            privateFlag: false,
+            isTemp: true,
+            vipFlag: false
+        }, {
+            headers: {
+                uniqueid: uid,
+                verify: cf.result.token
+            }
+        });
+        
+        while (true) {
+            const { data } = await axios.get(`https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`, {
+                headers: {
+                    uniqueid: uid,
+                    verify: cf.result.token
+                }
+            });
+            
+            if (data.data.state === 'success') return JSON.parse(data.data.completeData);
+            await new Promise(res => setTimeout(res, 1000));
+        }
+    } catch (error) {
+        throw new Error(error.message);
+    }
 }
-*/
 
-// Ekspor fungsi utilitas jika diperlukan di tempat lain
-// module.exports = { router, delay, txt2vidWithRetry };
+// Usage:
+const resp = await txt2vid('A handsome 18-year-old Indonesian male villager with a medium, well-proportioned build, healthy warm tan skin, and a modern low fade haircut, wearing a simple fitted plain black cotton t-shirt, plain black jeans, and simple black sneakers, is standing at the edge of a vibrant green rice paddy field, his gaze fixed on the rising sun. The early morning sky is a gradient of soft oranges and purples, with a few wispy clouds. The air is cool and crisp, dew still clinging to the rice stalks. In the distance, traditional Indonesian village houses are silhouetted against the dawn light, and the gentle sounds of the awakening village can be heard. This is a highly detailed, photorealistic render.', "9:16");
+return resp
