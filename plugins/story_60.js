@@ -173,7 +173,16 @@ function router(app, routes = [], pluginName) {
 
     app.get(`/create-story-get`, async (req, res) => {
       if (!req.query.name) return res.json({status: false})
-      
+      let data = [{ nama: 'asep', nilai: 78 }];
+
+if (data.some(item => item.nama === 'asep')) {
+  console.log("Ya, 'asep' ada di dalam array!");
+  // Lakukan sesuatu di sini jika 'asep' ditemukan
+} else {
+  console.log("Tidak, 'asep' tidak ada di dalam array.");
+  // Lakukan sesuatu yang lain jika 'asep' tidak ditemukan
+}
+
     });
 }
 
