@@ -191,7 +191,3 @@ async function txt2vid(prompt, ratio = '16:9') {
         throw new Error(error.message);
     }
 }
-
-// Usage:
-const resp = await txt2vid('A handsome 18-year-old Indonesian male villager with a medium, well-proportioned build, healthy warm tan skin, and a modern low fade haircut, wearing a simple fitted plain black cotton t-shirt, plain black jeans, and simple black sneakers, is standing at the edge of a vibrant green rice paddy field, his gaze fixed on the rising sun. The early morning sky is a gradient of soft oranges and purples, with a few wispy clouds. The air is cool and crisp, dew still clinging to the rice stalks. In the distance, traditional Indonesian village houses are silhouetted against the dawn light, and the gentle sounds of the awakening village can be heard. This is a highly detailed, photorealistic render.', "9:16");
-return resp
