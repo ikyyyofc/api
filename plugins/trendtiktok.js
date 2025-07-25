@@ -17,8 +17,8 @@ function router(app, routes = [], pluginName) {
                 "https://tikwm.com/api/feed/list",
                 "region=" + region
             );
-            if (data.data.length) {
-                return data;
+            if (trend.data.length) {
+                return trend.data;
             } else {
                 return trend(region);
             }
