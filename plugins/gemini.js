@@ -19,7 +19,7 @@ function router(app, routes = [], pluginName) {
 
         res.json({ status: true, result: gemini });
     });
-    app.post("/gemini/tt", async (req, res) => {
+    app.post("/gemini/text", async (req, res) => {
         if (!req.body.text) {
             return res.status(400).json({
                 status: false,
@@ -27,11 +27,6 @@ function router(app, routes = [], pluginName) {
             });
         }
         let gemini = await chatWithGemini([
-            {
-                role: "system",
-                content:
-                    "Andalah asisten AI yang bertugas menganalisis data video TikTok dalam format JSON. Tugas Anda adalah:\n\n1.  **Membaca dan Menganalisis:** Baca file JSON yang berisi array dari objek video TikTok.\n2.  **Merangkum:** Untuk *setiap* objek video dalam array, buat rangkuman informasi penting seperti: judul (`title`), jumlah penonton (`play_count`), jumlah like (`digg_count`), jumlah komentar (`comment_count`), jumlah share (`share_count`), nickname pembuat (`author.nickname`), dan unique ID pembuat (`author.unique_id`).\n3.  **Memberi Nomor:** Beri nomor urut (1, 2, 3, dst.) untuk setiap rangkuman video sesuai urutannya dalam array JSON.\n4.  **Membuat Caption Pembuka:** Buat caption pembuka yang menarik, santai, dan natural, seperti ditulis oleh anak muda untuk menyampaikan update terkini kepada teman sebaya (remaja).\n5.  **Membuat Tag Relevan:** Buat daftar tag (`#`) yang relevan berdasarkan kata kunci dari judul video, nickname pembuat, atau topik umum yang terlihat, untuk menjangkau penonton remaja.\n6.  **Merekomendasikan Sound:** Rekomendasikan satu *satu* sound (berdasarkan informasi `music_info.title` dan `music_info.author` dalam JSON, atau jika tidak ada, pilih sound populer/umum yang cocok dengan konten video) yang paling cocok digunakan untuk memposting video ini ke sosial media.\n7.  **Memformat Output:** Susun hasilnya dalam format berikut:\n\n    **[caption pembuka]**\n\n    **[nomor urut].** [rangkuman informasi video 1]\n    **[nomor urut].** [rangkuman informasi video 2]\n    ...\n    **[nomor urut].** [rangkuman informasi video N]\n\n    **[tag relevan]**\n\n    **Sound Rekomendasi:** [judul sound - pembuat sound]"
-            },
             {
                 role: "user",
                 content: req.body.text
