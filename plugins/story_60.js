@@ -82,77 +82,39 @@ async function txt2vid(prompt, ratio = "16:9") {
     // return { data: { video_url: `http://example.com/video_${prompt.slice(0, 5)}.mp4` } };
 }
 */
-async function txt2vid(prompt, ratio = "16:9") {
+async function txt2vid(prompt) {
     try {
-        const _ratio = ["16:9", "9:16", "1:1", "4:3", "3:4"];
-
-        if (!prompt) throw new Error("Prompt is required");
-        if (!_ratio.includes(ratio))
-            throw new Error(`Available ratios: ${_ratio.join(", ")}`);
-
-        const { data: cf } = await axios.get(
-            "https://api.nekorinn.my.id/tools/rynn-stuff",
-            {
-                params: {
-                    mode: "turnstile-min",
-                    siteKey: "0x4AAAAAAATOXAtQtziH-Rwq",
-                    url: "https://www.yeschat.ai/features/text-to-video-generator",
-                    accessKey:
-                        "a40fc14224e8a999aaf0c26739b686abfa4f0b1934cda7fa3b34522b0ed5125d"
-                }
+        const { data: k } = await axios.post('https://soli.aritek.app/txt2videov3', {
+            deviceID: Math.random().toString(16).substr(2, 8) + Math.random().toString(16).substr(2, 8),
+            prompt: prompt,
+            used: [],
+            versionCode: 51
+        }, {
+            headers: {
+                authorization: 'eyJzdWIiwsdeOiIyMzQyZmczNHJ0MzR0weMzQiLCJuYW1lIjorwiSm9objMdf0NTM0NT',
+                'content-type': 'application/json; charset=utf-8',
+                'accept-encoding': 'gzip',
+                'user-agent': 'okhttp/4.11.0'
             }
-        );
-
-        const uid = crypto
-            .createHash("md5")
-            .update(Date.now().toString())
-            .digest("hex");
-        const { data: task } = await axios.post(
-            "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
-            {
-                prompt: prompt,
-                imgUrls: [],
-                quality: "540p",
-                duration: 5,
-                autoSoundFlag: false,
-                soundPrompt: "",
-                autoSpeechFlag: false,
-                speechPrompt: "",
-                speakerId: "Auto",
-                aspectRatio: ratio,
-                secondaryPageId: 388,
-                channel: "PIXVERSE",
-                source: "yeschat.ai",
-                type: "features",
-                watermarkFlag: false,
-                privateFlag: false,
-                isTemp: true,
-                vipFlag: false
-            },
-            {
-                headers: {
-                    uniqueid: uid,
-                    verify: cf.result.token
-                }
+        });
+        
+        const { data } = await axios.post('https://soli.aritek.app/video', {
+            keys: [k.key]
+        }, {
+            headers: {
+                authorization: 'eyJzdWIiwsdeOiIyMzQyZmczNHJ0MzR0weMzQiLCJuYW1lIjorwiSm9objMdf0NTM0NT',
+                'content-type': 'application/json; charset=utf-8',
+                'accept-encoding': 'gzip',
+                'user-agent': 'okhttp/4.11.0'
             }
-        );
-
-        while (true) {
-            const { data } = await axios.get(
-                `https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`,
-                {
-                    headers: {
-                        uniqueid: uid,
-                        verify: cf.result.token
-                    }
-                }
-            );
-
-            if (data.data.state === "success")
-                return JSON.parse(data.data.completeData);
-            await new Promise(res => setTimeout(res, 1000));
-        }
+        });
+        
+        return data.datas[0].url;
     } catch (error) {
         throw new Error(error.message);
     }
 }
+
+// Usage:
+const resp = await txt2video('A pixel-art queen, standing in her grand pixelated throne room, with a sunbeam casting light onto her flowing cape.');
+console.log(resp);
