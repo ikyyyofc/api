@@ -13,10 +13,10 @@ function router(app, routes = [], pluginName) {
     });
     async function get_trend(region) {
         try {
-            const trend = await axios.post(
+            const trend = (await axios.post(
                 "https://tikwm.com/api/feed/list",
                 "region=" + region
-            );
+            ));
             if (trend.data.length) {
                 return trend.data;
             } else {
