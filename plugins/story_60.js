@@ -177,13 +177,16 @@ function router(app, routes = [], pluginName) {
         // 1. Temukan indeksnya
         // Kita gunakan method 'findIndex()' yang ada di array JavaScript.
         // Method ini akan mencari elemen pertama yang memenuhi kondisi yang kita berikan.
-        const index = buffer_url.findIndex(item => item.name === req.query.name);
+        const index = buffer_url.findIndex(
+            item => item.name === req.query.name
+        );
 
         // 2. Periksa apakah nama "yanti" ditemukan
         // Jika 'findIndex()' tidak menemukan elemen yang cocok, dia akan mengembalikan nilai -1.
         // Jadi, kita perlu memeriksa apakah 'index' bukan -1.
         if (index !== -1) {
-            data[index].kelas = 7;
+            res.setHeader("Content-Type", "image/png");
+            res.send(buffer_url[index].buffer);
         } else {
             console.log("Nama 'yanti' tidak ditemukan dalam array data.");
         }
