@@ -31,7 +31,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
 
         // --- Attempt 1 ---
         try {
-            const { data: cf } = await axios.get(
+            const {  cf } = await axios.get(
                 "https://api.nekorinn.my.id/tools/rynn-stuff",
                 {
                     params: {
@@ -99,7 +99,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
             console.warn("Primary API failed, trying secondary API:", primaryError.message);
 
             // --- Attempt 2 (Fallback) ---
-            const { data: cf } = await axios.get(
+            const {  cf } = await axios.get(
                 "https://api.nekorinn.my.id/tools/rynn-stuff",
                 {
                     params: {
@@ -115,7 +115,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
                 .createHash("md5")
                 .update(Date.now().toString())
                 .digest("hex");
-            const { data: task } = await axios.post(
+            const {  task } = await axios.post(
                 "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
                 {
                     prompt: prompt,
@@ -283,6 +283,12 @@ function router(app, routes = [], pluginName) {
             let get_json;
             try {
                 get_json = JSON.parse(q.data);
+                if (!Array.isArray(get_json.result)) {
+                    return res.status(400).json({
+                        status: false,
+                        error: "Invalid data format: 'result' should be an array"
+                    });
+                }
                 const isValidFormat = get_json.result.every(
                     item =>
                         typeof item.part === "number" &&
