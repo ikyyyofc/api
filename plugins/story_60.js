@@ -205,7 +205,7 @@ module.exports = router;
 
 async function txt2vid(
     prompt,
-    { model = "veo-3-fast", auto_sound = false, auto_speech = false } = {}
+    { model = "veo-3", auto_sound = false, auto_speech = false } = {}
 ) {
     try {
         const _model = ["veo-3-fast", "veo-3"];
