@@ -158,8 +158,8 @@ function router(app, routes = [], pluginName) {
                     part: item.part,
                     prompt: item.prompt,
                     url:
-                        "https://ikyy-api.hf.space/create-story-get?name=" +
-                        videoResults[index] // Ambil URL dari hasil txt2vid
+                        //"https://ikyy-api.hf.space/create-story-get?name=" +
+                        videoResults[index].data.result_urls[0] // Ambil URL dari hasil txt2vid
                 }))
                 .sort((a, b) => a.part - b.part); // Urutkan berdasarkan 'part'
 
