@@ -1,9 +1,9 @@
 const axios = require("axios");
 const crypto = require("crypto");
 
-const REQUEST_DELAY_MS = 1000;
+const REQUEST_DELAY_MS = 5000;
 const MAX_RETRIES = 10;
-const RETRY_DELAY_MS = 1000;
+const RETRY_DELAY_MS = 5000;
 
 // --- Simple in-memory task store (Replace with a database like Redis or MongoDB in production) ---
 const taskStore = {};
