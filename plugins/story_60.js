@@ -203,24 +203,92 @@ function router(app, routes = [], pluginName) {
 
 module.exports = router;
 
-async function txt2vid(prompt) {
+async function txt2vid(
+    prompt,
+    { model = "veo-3-fast", auto_sound = false, auto_speech = false } = {}
+) {
     try {
-        const req = await axios.post(
-            `https://ikyy-api.hf.space/aiimage`,
-            {
-                prompt: prompt
-            },
-            { responseType: "arraybuffer" }
-        );
-        let name = generateRandomPngFilename();
-        buffer_url.push({ name: name, buffer: req.data });
+        const _model = ["veo-3-fast", "veo-3"];
 
-        return name;
+        if (!prompt) throw new Error("Prompt is required");
+        if (!_model.includes(model))
+            throw new Error(`Available models: ${_model.join(", ")}`);
+        if (typeof auto_sound !== "boolean")
+            throw new Error("Auto sound must be a boolean");
+        if (typeof auto_speech !== "boolean")
+            throw new Error("Auto speech must be a boolean");
+
+        const { data: cf } = await axios.get(
+            "https://api.nekorinn.my.id/tools/rynn-stuff",
+            {
+                params: {
+                    mode: "turnstile-min",
+                    siteKey: "0x4AAAAAAANuFg_hYO9YJZqo",
+                    url: "https://aivideogenerator.me/features/g-ai-video-generator",
+                    accessKey:
+                        "e2ddc8d3ce8a8fceb9943e60e722018cb23523499b9ac14a8823242e689eefed"
+                }
+            }
+        );
+
+        const uid = crypto
+            .createHash("md5")
+            .update(Date.now().toString())
+            .digest("hex");
+        const { data: task } = await axios.post(
+            "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
+            {
+                prompt: prompt,
+                imgUrls: [],
+                quality: "720p",
+                duration: 8,
+                autoSoundFlag: auto_sound,
+                soundPrompt: "",
+                autoSpeechFlag: auto_speech,
+                speechPrompt: "",
+                speakerId: "Auto",
+                aspectRatio: "16:9",
+                secondaryPageId: 1811,
+                channel: "VEO3",
+                source: "aivideogenerator.me",
+                type: "features",
+                watermarkFlag: true,
+                privateFlag: true,
+                isTemp: true,
+                vipFlag: true,
+                model: model
+            },
+            {
+                headers: {
+                    uniqueid: uid,
+                    verify: cf.result.token
+                }
+            }
+        );
+
+        while (true) {
+            const { data } = await axios.get(
+                `https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`,
+                {
+                    headers: {
+                        uniqueid: uid,
+                        verify: cf.result.token
+                    }
+                }
+            );
+
+            if (data.data.state === "success")
+                return JSON.parse(data.data.completeData);
+            await new Promise(res => setTimeout(res, 1000));
+        }
     } catch (error) {
         throw new Error(error.message);
     }
 }
 
+// Usage:
+const resp = await veo3("a woman relaxing on the beach", { model: "veo-3" });
+console.log(resp);
 function generateRandomPngFilename(length = 50) {
     const characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321";
