@@ -283,12 +283,6 @@ function router(app, routes = [], pluginName) {
             let get_json;
             try {
                 get_json = JSON.parse(q.data);
-                if (!Array.isArray(get_json.result)) {
-                    return res.status(400).json({
-                        status: false,
-                        error: "Invalid data format: 'result' should be an array"
-                    });
-                }
                 const isValidFormat = get_json.result.every(
                     item =>
                         typeof item.part === "number" &&
