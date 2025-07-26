@@ -61,7 +61,6 @@ async function txt2vidWithRetry(
 
 // Asumsikan fungsi txt2vid didefinisikan di sini atau diimpor
 // async function txt2vid(prompt, ratio = "16:9") { ... }
-let buffer_url = [];
 function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName,
@@ -175,28 +174,6 @@ function router(app, routes = [], pluginName) {
             const errorMessage =
                 error.message || "An error occurred while creating the story.";
             res.status(500).json({ status: false, error: errorMessage });
-        }
-    });
-
-    app.get(`/create-story-get`, async (req, res) => {
-        if (!req.query.name)
-            return res.json({ status: false, mess: "name required" });
-
-        // 1. Temukan indeksnya
-        // Kita gunakan method 'findIndex()' yang ada di array JavaScript.
-        // Method ini akan mencari elemen pertama yang memenuhi kondisi yang kita berikan.
-        const index = buffer_url.findIndex(
-            item => item.name === req.query.name
-        );
-
-        // 2. Periksa apakah nama "yanti" ditemukan
-        // Jika 'findIndex()' tidak menemukan elemen yang cocok, dia akan mengembalikan nilai -1.
-        // Jadi, kita perlu memeriksa apakah 'index' bukan -1.
-        if (index !== -1) {
-            res.setHeader("Content-Type", "image/png");
-            res.send(buffer_url[index].buffer);
-        } else {
-            res.json({ status: false, mess: "not found" });
         }
     });
 }
