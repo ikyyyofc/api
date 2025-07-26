@@ -24,6 +24,20 @@ function router(app, routes = [], pluginName) {
 
         res.json({ status: true, result: gemini });
     });
+    app.post("/gemini/prompt", async (req, res) => {
+        if (!req.body || !req.body.user || !req.body.system) {
+            return res.status(400).json({
+                status: false,
+                error: "body system and user is required"
+            });
+        }
+        let gemini = await chatWithGemini([
+            { role: "system", content: req.body.system },
+            { role: "user", content: req.body.user }
+        ]);
+
+        res.json({ status: true, result: gemini });
+    });
 }
 
 module.exports = router;
