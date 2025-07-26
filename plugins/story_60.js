@@ -286,9 +286,6 @@ async function txt2vid(
     }
 }
 
-// Usage:
-const resp = await veo3("a woman relaxing on the beach", { model: "veo-3" });
-console.log(resp);
 function generateRandomPngFilename(length = 50) {
     const characters =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321";
