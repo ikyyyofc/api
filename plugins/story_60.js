@@ -2,7 +2,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 
 const REQUEST_DELAY_MS = 1000;
-const MAX_RETRIES = 20;
+const MAX_RETRIES = 10;
 const RETRY_DELAY_MS = 1000;
 
 // --- Simple in-memory task store (Replace with a database like Redis or MongoDB in production) ---
@@ -17,7 +17,7 @@ function generateTaskId() {
     return crypto.randomBytes(16).toString('hex');
 }
 
-// --- Core Video Generation Logic ---
+// --- Core Video Generation Logic (txt2vid & txt2vidWithRetry remain largely the same) ---
 async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speech = false } = {}) {
     try {
         const _model = ["veo-3-fast", "veo-3"];
@@ -31,7 +31,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
 
         // --- Attempt 1 ---
         try {
-            const {  cf } = await axios.get(
+            const { data: cf } = await axios.get(
                 "https://api.nekorinn.my.id/tools/rynn-stuff",
                 {
                     params: {
@@ -99,7 +99,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
             console.warn("Primary API failed, trying secondary API:", primaryError.message);
 
             // --- Attempt 2 (Fallback) ---
-            const {  cf } = await axios.get(
+            const { data: cf } = await axios.get(
                 "https://api.nekorinn.my.id/tools/rynn-stuff",
                 {
                     params: {
@@ -115,7 +115,7 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
                 .createHash("md5")
                 .update(Date.now().toString())
                 .digest("hex");
-            const {  task } = await axios.post(
+            const { data: task } = await axios.post(
                 "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
                 {
                     prompt: prompt,
@@ -171,9 +171,9 @@ async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speec
 }
 
 async function txt2vidWithRetry(prompt, ratio = "16:9", maxRetries = MAX_RETRIES) {
+    // Note: Ratio is not used in txt2vid, but kept for compatibility
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            // Note: Ratio is not used in txt2vid, but kept for compatibility
             const result = await txt2vid(prompt, { model: "veo-3" }); // Use default model
             return result;
         } catch (error) {
@@ -207,26 +207,30 @@ async function txt2vidWithRetry(prompt, ratio = "16:9", maxRetries = MAX_RETRIES
     );
 }
 
-// --- Asynchronous Task Processing ---
+// --- Asynchronous Task Processing (MODIFIED for sequential execution) ---
 async function processTask(taskId, storyData) {
      try {
         console.log(`[INFO] Starting processing for task ${taskId}`);
         taskStore[taskId].status = 'processing';
 
-        const videoPromisesWithDelay = [];
+        const videoResults = []; // Array to store results sequentially
 
+        // --- Execute video generation sequentially ---
         for (let i = 0; i < storyData.result.length; i++) {
             const item = storyData.result[i];
-            const delayedPromise = (async () => {
-                if (i > 0) {
-                    await delay(REQUEST_DELAY_MS);
-                }
-                return await txt2vidWithRetry(item.prompt, "9:16", MAX_RETRIES);
-            })();
-            videoPromisesWithDelay.push(delayedPromise);
-        }
 
-        const videoResults = await Promise.all(videoPromisesWithDelay);
+            // Add delay before each request (except the first one)
+            if (i > 0 && REQUEST_DELAY_MS > 0) {
+                console.log(`[INFO] Waiting ${REQUEST_DELAY_MS}ms before next request...`);
+                await delay(REQUEST_DELAY_MS);
+            }
+
+            console.log(`[INFO] Processing part ${item.part}: ${item.prompt.substring(0, 50)}...`);
+            const result = await txt2vidWithRetry(item.prompt, "9:16", MAX_RETRIES);
+            videoResults.push(result);
+            console.log(`[INFO] Completed part ${item.part}`);
+        }
+        // --- End of sequential execution ---
 
         const combinedAndSortedResults = storyData.result
             .map((item, index) => ({
