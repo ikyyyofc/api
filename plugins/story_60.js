@@ -9,7 +9,6 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
 async function txt2vidWithRetry(
     prompt,
     ratio = "16:9",
@@ -17,8 +16,8 @@ async function txt2vidWithRetry(
 ) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const result = await txt2vid(prompt, ratio); 
-            return result; 
+            const result = await txt2vid(prompt, ratio);
+            return result;
         } catch (error) {
             console.error(
                 `[ERROR] txt2vid GAGAL (Percobaan ${attempt}/${maxRetries}) untuk prompt: ${prompt.substring(
@@ -41,7 +40,6 @@ async function txt2vidWithRetry(
                 );
             }
             if (RETRY_DELAY_MS > 0) {
-                
                 await delay(RETRY_DELAY_MS);
             }
         }
@@ -121,18 +119,15 @@ function router(app, routes = [], pluginName) {
                 videoPromisesWithDelay.push(delayedPromise);
             }
 
-
             const videoResults = await Promise.all(videoPromisesWithDelay);
-
 
             const combinedAndSortedResults = get_json.result
                 .map((item, index) => ({
                     part: item.part,
                     prompt: item.prompt,
-                    url:
-                        videoResults[index].data.result_urls[0] 
+                    url: videoResults[index].data.result_urls[0]
                 }))
-                .sort((a, b) => a.part - b.part); 
+                .sort((a, b) => a.part - b.part);
             res.json({ status: true, result: combinedAndSortedResults });
         } catch (error) {
             console.error("Error processing /create-story request:", error);
