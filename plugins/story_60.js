@@ -5,148 +5,22 @@ const REQUEST_DELAY_MS = 1000;
 const MAX_RETRIES = 10;
 const RETRY_DELAY_MS = 1000;
 
+// --- Simple in-memory task store (Replace with a database like Redis or MongoDB in production) ---
+const taskStore = {};
+
+// --- Helper Functions ---
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function txt2vidWithRetry(
-    prompt,
-    ratio = "16:9",
-    maxRetries = MAX_RETRIES
-) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            const result = await txt2vid(prompt, ratio);
-            return result;
-        } catch (error) {
-            console.error(
-                `[ERROR] txt2vid GAGAL (Percobaan ${attempt}/${maxRetries}) untuk prompt: ${prompt.substring(
-                    0,
-                    30
-                )}... - Error:`,
-                error.message || error
-            );
-            if (attempt === maxRetries) {
-                console.error(
-                    `[ERROR] Semua percobaan untuk prompt '${prompt.substring(
-                        0,
-                        30
-                    )}...' telah gagal.`
-                );
-                throw new Error(
-                    `Gagal setelah ${maxRetries} percobaan: ${
-                        error.message || error
-                    }`
-                );
-            }
-            if (RETRY_DELAY_MS > 0) {
-                await delay(RETRY_DELAY_MS);
-            }
-        }
-    }
-    throw new Error(
-        "txt2vidWithRetry: Proses retry tidak selesai dengan benar."
-    );
+function generateTaskId() {
+    return crypto.randomBytes(16).toString('hex');
 }
 
-function router(app, routes = [], pluginName) {
-    routes.push({
-        plugin: pluginName,
-        endpoints: [
-            {
-                method: "POST",
-                path: "/create-story",
-                description: "create story"
-            }
-        ]
-    });
-
-    app.post("/create-story", async (req, res) => {
-        try {
-            let q = req.body;
-            // Validasi awal
-            if (!q || !q.data) {
-                return res.status(400).json({
-                    status: false,
-                    error: "Missing data in request body"
-                });
-            }
-
-            let get_json;
-            try {
-                get_json = JSON.parse(q.data);
-                if (!Array.isArray(get_json.result)) {
-                    return res.status(400).json({
-                        status: false,
-                        error: "Invalid data format: 'result' should be an array"
-                    });
-                }
-                const isValidFormat = get_json.result.every(
-                    item =>
-                        typeof item.part === "number" &&
-                        typeof item.prompt === "string"
-                );
-                if (!isValidFormat) {
-                    return res.status(400).json({
-                        status: false,
-                        error: "Invalid item format in 'result' array. Each item must have 'part' (number) and 'prompt' (string)."
-                    });
-                }
-            } catch (parseError) {
-                console.error("JSON Parse Error:", parseError);
-                return res.status(400).json({
-                    status: false,
-                    error: "Invalid JSON data provided"
-                });
-            }
-
-            const videoPromisesWithDelay = [];
-
-            for (let i = 0; i < get_json.result.length; i++) {
-                const item = get_json.result[i];
-
-                const delayedPromise = (async () => {
-                    if (i > 0) {
-                        await delay(REQUEST_DELAY_MS);
-                    }
-                    return await txt2vidWithRetry(
-                        item.prompt,
-                        "9:16",
-                        MAX_RETRIES
-                    );
-                })();
-
-                videoPromisesWithDelay.push(delayedPromise);
-            }
-
-            const videoResults = await Promise.all(videoPromisesWithDelay);
-
-            const combinedAndSortedResults = get_json.result
-                .map((item, index) => ({
-                    part: item.part,
-                    prompt: item.prompt,
-                    url: videoResults[index].data.result_urls[0]
-                }))
-                .sort((a, b) => a.part - b.part);
-            res.json({ status: true, result: combinedAndSortedResults });
-        } catch (error) {
-            console.error("Error processing /create-story request:", error);
-            const errorMessage =
-                error.message || "An error occurred while creating the story.";
-            res.status(500).json({ status: false, error: errorMessage });
-        }
-    });
-}
-
-module.exports = router;
-
-async function txt2vid(
-    prompt,
-    { model = "veo-3", auto_sound = false, auto_speech = false } = {}
-) {
+// --- Core Video Generation Logic ---
+async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speech = false } = {}) {
     try {
         const _model = ["veo-3-fast", "veo-3"];
-
         if (!prompt) throw new Error("Prompt is required");
         if (!_model.includes(model))
             throw new Error(`Available models: ${_model.join(", ")}`);
@@ -155,57 +29,47 @@ async function txt2vid(
         if (typeof auto_speech !== "boolean")
             throw new Error("Auto speech must be a boolean");
 
-        const { data: cf } = await axios.get(
-            "https://api.nekorinn.my.id/tools/rynn-stuff",
-            {
-                params: {
-                    mode: "turnstile-min",
-                    siteKey: "0x4AAAAAAANuFg_hYO9YJZqo",
-                    url: "https://aivideogenerator.me/features/g-ai-video-generator",
-                    accessKey:
-                        "e2ddc8d3ce8a8fceb9943e60e722018cb23523499b9ac14a8823242e689eefed"
+        // --- Attempt 1 ---
+        try {
+            const { data: cf } = await axios.get(
+                "https://api.nekorinn.my.id/tools/rynn-stuff",
+                {
+                    params: {
+                        mode: "turnstile-min",
+                        siteKey: "0x4AAAAAAANuFg_hYO9YJZqo",
+                        url: "https://aivideogenerator.me/features/g-ai-video-generator",
+                        accessKey:
+                            "e2ddc8d3ce8a8fceb9943e60e722018cb23523499b9ac14a8823242e689eefed"
+                    }
                 }
-            }
-        );
-
-        const uid = crypto
-            .createHash("md5")
-            .update(Date.now().toString())
-            .digest("hex");
-        const { data: task } = await axios.post(
-            "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
-            {
-                prompt: prompt,
-                imgUrls: [],
-                quality: "720p",
-                duration: 8,
-                autoSoundFlag: auto_sound,
-                soundPrompt: "",
-                autoSpeechFlag: auto_speech,
-                speechPrompt: "",
-                speakerId: "Auto",
-                aspectRatio: "16:9",
-                secondaryPageId: 1811,
-                channel: "VEO3",
-                source: "aivideogenerator.me",
-                type: "features",
-                watermarkFlag: true,
-                privateFlag: true,
-                isTemp: true,
-                vipFlag: true,
-                model: model
-            },
-            {
-                headers: {
-                    uniqueid: uid,
-                    verify: cf.result.token
-                }
-            }
-        );
-
-        while (true) {
-            const { data } = await axios.get(
-                `https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`,
+            );
+            const uid = crypto
+                .createHash("md5")
+                .update(Date.now().toString())
+                .digest("hex");
+            const { data: task } = await axios.post(
+                "https://aiarticle.erweima.ai/api/v1/secondary-page/api/create",
+                {
+                    prompt: prompt,
+                    imgUrls: [],
+                    quality: "720p",
+                    duration: 8,
+                    autoSoundFlag: auto_sound,
+                    soundPrompt: "",
+                    autoSpeechFlag: auto_speech,
+                    speechPrompt: "",
+                    speakerId: "Auto",
+                    aspectRatio: "16:9",
+                    secondaryPageId: 1811,
+                    channel: "VEO3",
+                    source: "aivideogenerator.me",
+                    type: "features",
+                    watermarkFlag: true,
+                    privateFlag: true,
+                    isTemp: true,
+                    vipFlag: true,
+                    model: model
+                },
                 {
                     headers: {
                         uniqueid: uid,
@@ -214,22 +78,27 @@ async function txt2vid(
                 }
             );
 
-            if (data.data.state === "success")
-                return JSON.parse(data.data.completeData);
-            await new Promise(res => setTimeout(res, 1000));
-        }
-    } catch {
-        try {
-            const _model = ["veo-3-fast", "veo-3"];
+            while (true) {
+                const { data } = await axios.get(
+                    `https://aiarticle.erweima.ai/api/v1/secondary-page/api/${task.data.recordId}`,
+                    {
+                        headers: {
+                            uniqueid: uid,
+                            verify: cf.result.token
+                        }
+                    }
+                );
+                if (data.data.state === "success")
+                    return JSON.parse(data.data.completeData);
+                if (data.data.state === "failed") {
+                     throw new Error(`API Task failed: ${data.data.message || 'Unknown API error'}`);
+                }
+                await delay(2000); // Check every 2 seconds
+            }
+        } catch (primaryError) {
+            console.warn("Primary API failed, trying secondary API:", primaryError.message);
 
-            if (!prompt) throw new Error("Prompt is required");
-            if (!_model.includes(model))
-                throw new Error(`Available models: ${_model.join(", ")}`);
-            if (typeof auto_sound !== "boolean")
-                throw new Error("Auto sound must be a boolean");
-            if (typeof auto_speech !== "boolean")
-                throw new Error("Auto speech must be a boolean");
-
+            // --- Attempt 2 (Fallback) ---
             const { data: cf } = await axios.get(
                 "https://api.nekorinn.my.id/tools/rynn-stuff",
                 {
@@ -242,7 +111,6 @@ async function txt2vid(
                     }
                 }
             );
-
             const uid = crypto
                 .createHash("md5")
                 .update(Date.now().toString())
@@ -288,26 +156,230 @@ async function txt2vid(
                         }
                     }
                 );
-
                 if (data.data.state === "success")
                     return JSON.parse(data.data.completeData);
-                await new Promise(res => setTimeout(res, 1000));
+                if (data.data.state === "failed") {
+                     throw new Error(`API Task failed: ${data.data.message || 'Unknown API error'}`);
+                }
+                await delay(2000); // Check every 2 seconds
             }
-        } catch (error) {
-            throw new Error(error.message);
         }
+    } catch (error) {
+        console.error("Error in txt2vid:", error.message);
+        throw new Error(`Video generation failed: ${error.message}`);
     }
 }
 
-function generateRandomPngFilename(length = 50) {
-    const characters =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321";
-    let result = "";
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(
-            Math.floor(Math.random() * charactersLength)
-        );
+async function txt2vidWithRetry(prompt, ratio = "16:9", maxRetries = MAX_RETRIES) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            // Note: Ratio is not used in txt2vid, but kept for compatibility
+            const result = await txt2vid(prompt, { model: "veo-3" }); // Use default model
+            return result;
+        } catch (error) {
+            console.error(
+                `[ERROR] txt2vid GAGAL (Percobaan ${attempt}/${maxRetries}) untuk prompt: ${prompt.substring(
+                    0,
+                    30
+                )}... - Error:`,
+                error.message || error
+            );
+            if (attempt === maxRetries) {
+                console.error(
+                    `[ERROR] Semua percobaan untuk prompt '${prompt.substring(
+                        0,
+                        30
+                    )}...' telah gagal.`
+                );
+                throw new Error(
+                    `Gagal setelah ${maxRetries} percobaan: ${
+                        error.message || error
+                    }`
+                );
+            }
+            if (RETRY_DELAY_MS > 0) {
+                await delay(RETRY_DELAY_MS);
+            }
+        }
     }
-    return result + ".png";
+    throw new Error(
+        "txt2vidWithRetry: Proses retry tidak selesai dengan benar."
+    );
 }
+
+// --- Asynchronous Task Processing ---
+async function processTask(taskId, storyData) {
+     try {
+        console.log(`[INFO] Starting processing for task ${taskId}`);
+        taskStore[taskId].status = 'processing';
+
+        const videoPromisesWithDelay = [];
+
+        for (let i = 0; i < storyData.result.length; i++) {
+            const item = storyData.result[i];
+            const delayedPromise = (async () => {
+                if (i > 0) {
+                    await delay(REQUEST_DELAY_MS);
+                }
+                return await txt2vidWithRetry(item.prompt, "9:16", MAX_RETRIES);
+            })();
+            videoPromisesWithDelay.push(delayedPromise);
+        }
+
+        const videoResults = await Promise.all(videoPromisesWithDelay);
+
+        const combinedAndSortedResults = storyData.result
+            .map((item, index) => ({
+                part: item.part,
+                prompt: item.prompt,
+                url: videoResults[index].data.result_urls[0] // Assuming the first URL is the video
+            }))
+            .sort((a, b) => a.part - b.part);
+
+        taskStore[taskId].status = 'completed';
+        taskStore[taskId].result = combinedAndSortedResults;
+        console.log(`[INFO] Task ${taskId} completed successfully.`);
+
+    } catch (error) {
+        console.error(`[ERROR] Task ${taskId} failed:`, error.message);
+        taskStore[taskId].status = 'failed';
+        taskStore[taskId].error = error.message || "An error occurred during processing.";
+    }
+}
+
+
+// --- Router Definition ---
+function router(app, routes = [], pluginName) {
+    // Registering routes metadata (optional)
+    routes.push({
+        plugin: pluginName,
+        endpoints: [
+            {
+                method: "POST",
+                path: "/create-story-task",
+                description: "Create a story generation task and return task ID"
+            },
+            {
+                method: "GET",
+                path: "/check-story-task/:taskId",
+                description: "Check the status of a story generation task by ID"
+            }
+        ]
+    });
+
+    // --- Route 1: Create Story Task ---
+    app.post("/create-story-task", async (req, res) => {
+        try {
+            let q = req.body;
+
+            // Validasi awal
+            if (!q || !q.data) {
+                return res.status(400).json({
+                    status: false,
+                    error: "Missing data in request body"
+                });
+            }
+
+            let get_json;
+            try {
+                get_json = JSON.parse(q.data);
+                if (!Array.isArray(get_json.result)) {
+                    return res.status(400).json({
+                        status: false,
+                        error: "Invalid data format: 'result' should be an array"
+                    });
+                }
+                const isValidFormat = get_json.result.every(
+                    item =>
+                        typeof item.part === "number" &&
+                        typeof item.prompt === "string"
+                );
+                if (!isValidFormat) {
+                    return res.status(400).json({
+                        status: false,
+                        error: "Invalid item format in 'result' array. Each item must have 'part' (number) and 'prompt' (string)."
+                    });
+                }
+            } catch (parseError) {
+                console.error("JSON Parse Error:", parseError);
+                return res.status(400).json({
+                    status: false,
+                    error: "Invalid JSON data provided"
+                });
+            }
+
+            // Generate a unique task ID
+            const taskId = generateTaskId();
+
+            // Store initial task state
+            taskStore[taskId] = {
+                id: taskId,
+                status: 'pending', // Initially pending
+                createdAt: new Date().toISOString(),
+                data: get_json, // Store the input data
+                result: null, // Will hold the final result
+                error: null  // Will hold error message if failed
+            };
+
+            // Start the asynchronous processing in the background
+             setImmediate(() => {
+                 processTask(taskId, get_json).catch(err => console.error("Unhandled error in processTask:", err));
+             });
+
+            // Respond immediately with the task ID
+            res.status(202).json({
+                status: true,
+                message: "Task created successfully. Use the task ID to check status.",
+                taskId: taskId
+            });
+
+        } catch (error) {
+            console.error("Error processing /create-story-task request:", error);
+            const errorMessage =
+                error.message || "An error occurred while creating the story task.";
+            res.status(500).json({ status: false, error: errorMessage });
+        }
+    });
+
+    // --- Route 2: Check Story Task Status ---
+    app.get("/check-story-task/:taskId", async (req, res) => {
+         try {
+             const { taskId } = req.params;
+
+             if (!taskId) {
+                 return res.status(400).json({
+                     status: false,
+                     error: "Task ID is required."
+                 });
+             }
+
+             const task = taskStore[taskId];
+
+             if (!task) {
+                 return res.status(404).json({
+                     status: false,
+                     error: "Task not found."
+                 });
+             }
+
+             // Return task status and details
+             res.json({
+                 status: true,
+                 taskId: task.id,
+                 status: task.status, // 'pending', 'processing', 'completed', 'failed'
+                 createdAt: task.createdAt,
+                 // Include result or error based on status
+                 ...(task.status === 'completed' && { result: task.result }),
+                 ...(task.status === 'failed' && { error: task.error })
+             });
+
+         } catch (error) {
+             console.error("Error processing /check-story-task request:", error);
+             const errorMessage =
+                 error.message || "An error occurred while checking the task status.";
+             res.status(500).json({ status: false, error: errorMessage });
+         }
+    });
+}
+
+module.exports = router;
