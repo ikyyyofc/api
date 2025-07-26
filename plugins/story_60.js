@@ -69,11 +69,6 @@ function router(app, routes = [], pluginName) {
                 method: "POST",
                 path: "/create-story",
                 description: "create story"
-            },
-            {
-                method: "GET",
-                path: "/create-story-get",
-                description: "get data"
             }
         ]
     });
