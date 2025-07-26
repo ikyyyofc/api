@@ -4,7 +4,12 @@ function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName,
         endpoints: [
-            { method: "POST", path: "/gemini/post", description: "Gemini AI" }
+            { method: "POST", path: "/gemini/post", description: "Gemini AI" },
+            {
+                method: "POST",
+                path: "/gemini/prompt",
+                description: "Gemini With Prompt"
+            }
         ]
     });
 
@@ -16,22 +21,6 @@ function router(app, routes = [], pluginName) {
             });
         }
         let gemini = await chatWithGemini(req.body.messages);
-
-        res.json({ status: true, result: gemini });
-    });
-    app.post("/gemini/text", async (req, res) => {
-        if (!req.body.text) {
-            return res.status(400).json({
-                status: false,
-                error: "text is required"
-            });
-        }
-        let gemini = await chatWithGemini([
-            {
-                role: "user",
-                content: req.body.text
-            }
-        ]);
 
         res.json({ status: true, result: gemini });
     });
