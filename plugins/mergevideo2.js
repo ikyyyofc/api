@@ -12,103 +12,126 @@ function generateUniqueFilename(prefix = 'temp', extension) {
     return `${prefix}_${timestamp}_${randomString}.${extension}`;
 }
 
-// Fungsi utama untuk menggabungkan video dengan transisi (URUTAN DIPERTAHANKAN)
-async function mergeVideosWithTransitions(videoUrls, outputPath, clipDuration = 8, transitionDuration = 1) {
+// Fungsi utama untuk menggabungkan klip video dengan transisi fade
+async function mergeVideosWithFade(videoUrls, outputPath, totalDuration = 64, transitionDuration = 1) {
     const tempDir = os.tmpdir();
     const downloadedVideoPaths = [];
-    const trimmedVideoPaths = []; // Paths untuk video yang sudah di-trim
+    const processedClipPaths = []; // Paths untuk klip yang sudah diproses (durasi & fade)
 
     try {
-        console.log(`[videoMerger] Memulai proses penggabungan video (Durasi Klip: ${clipDuration}s, Transisi: ${transitionDuration}s)...`);
-        console.log(`[videoMerger] Jumlah Video URLs: ${videoUrls.length}`);
-        console.log(`[videoMerger] URUTAN VIDEO AKAN SESUAI INPUT: ${videoUrls.map((_, i) => `Video ${i+1}`).join(' -> ')}`);
+        console.log(`[videoMerger] Memulai proses penggabungan video...`);
+        console.log(`[videoMerger] Jumlah video: ${videoUrls.length}`);
+        console.log(`[videoMerger] Durasi total target: ${totalDuration} detik`);
+        console.log(`[videoMerger] Durasi transisi: ${transitionDuration} detik`);
 
-        // 1. Download semua video SESUAI URUTAN
+        if (videoUrls.length !== 8) {
+             throw new Error(`Diperlukan tepat 8 URL video. Diterima: ${videoUrls.length}`);
+        }
+
+        // 1. Hitung durasi per klip (termasuk transisi)
+        // Durasi tayang per klip = (totalDuration / jumlah_klip) - (transition_duration * (jumlah_klip - 1) / jumlah_klip)
+        // Namun, untuk kesederhanaan dan memastikan durasi total, kita gunakan durasi tetap per klip termasuk transisi.
+        // Total transisi = (jumlah_klip - 1) * transition_duration
+        // Durasi tayang bersih = totalDuration - total_transisi
+        // Durasi tayang per klip = durasi_tayang_bersih / jumlah_klip
+        // Durasi klip input = durasi_tayang_per_klip + transition_duration
+
+        const totalTransitions = (videoUrls.length - 1) * transitionDuration;
+        const cleanPlayDuration = totalDuration - totalTransitions;
+        const displayDurationPerClip = cleanPlayDuration / videoUrls.length;
+        const inputClipDuration = displayDurationPerClip + transitionDuration; // Durasi klip input yang akan diambil
+
+        console.log(`[videoMerger] Total durasi transisi: ${totalTransitions}s`);
+        console.log(`[videoMerger] Total durasi tayang bersih: ${cleanPlayDuration}s`);
+        console.log(`[videoMerger] Durasi tayang per klip: ${displayDurationPerClip}s`);
+        console.log(`[videoMerger] Durasi input per klip (dengan buffer transisi): ${inputClipDuration}s`);
+
+        // 2. Download semua video
         const downloadPromises = videoUrls.map(async (url, index) => {
-            const urlObj = new URL(url);
-            const ext = path.extname(urlObj.pathname).substring(1) || 'mp4';
-            const videoPath = path.join(tempDir, generateUniqueFilename(`video_${index}`, ext));
-            console.log(`[videoMerger] [${index + 1}/${videoUrls.length}] Mendownload video: ${url}`);
+            const videoPath = path.join(tempDir, generateUniqueFilename(`clip_${index}`, 'mp4')); // Asumsi MP4
+            console.log(`[videoMerger] Mendownload video ${index + 1}: ${url}`);
             await execPromise(`curl -L -o "${videoPath}" "${url}"`);
-            console.log(`[videoMerger] [${index + 1}/${videoUrls.length}] Video disimpan di: ${videoPath}`);
-            downloadedVideoPaths.push(videoPath); // Urutan array sesuai urutan download
+            console.log(`[videoMerger] Video ${index + 1} disimpan di: ${videoPath}`);
+            downloadedVideoPaths.push(videoPath);
             return videoPath;
         });
         await Promise.all(downloadPromises);
 
-        // 2. Trim semua video ke durasi yang konsisten SESUAI URUTAN
-        const trimVideoPromises = downloadedVideoPaths.map(async (inputPath, index) => {
-            const trimmedPath = path.join(tempDir, generateUniqueFilename(`trimmed_${index}`, 'mp4'));
+        // 3. Potong dan tambahkan efek fade ke setiap klip
+        // Kita akan membuat klip yang sudah dipotong dan memiliki efek fade in/out
+        const processPromises = downloadedVideoPaths.map(async (inputPath, index) => {
+             // Untuk klip pertama, tidak perlu fade out di awal.
+             // Untuk klip terakhir, tidak perlu fade in di akhir.
+             // Untuk klip tengah, ada fade out di awal dan fade in di akhir.
 
-            // === PERTAMA COBA TANPA RE-ENCODE ===
-            let trimCommand = `ffmpeg -y -ss 0 -i "${inputPath}" -t ${clipDuration} -c copy "${trimmedPath}"`;
-            console.log(`[videoMerger] [${index + 1}/${downloadedVideoPaths.length}] [Coba 1 - Tanpa Re-encode] Trimming...`);
-            try {
-                 await execPromise(trimCommand);
-                 console.log(`[videoMerger] [${index + 1}/${downloadedVideoPaths.length}] [Sukses - Tanpa Re-encode] Video di-trim: ${trimmedPath}`);
-            } catch (trimError) {
-                console.warn(`[videoMerger] [${index + 1}/${downloadedVideoPaths.length}] [Gagal - Tanpa Re-encode]. Mencoba dengan re-encode.`, trimError.message?.substring(0, 100)); // Batasi log error
-                // === KEDUA COBA DENGAN RE-ENCODE ===
-                trimCommand = `ffmpeg -y -ss 0 -i "${inputPath}" -t ${clipDuration} -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k "${trimmedPath}"`;
-                console.log(`[videoMerger] [${index + 1}/${downloadedVideoPaths.length}] [Coba 2 - Dengan Re-encode] Trimming...`);
-                await execPromise(trimCommand);
-                console.log(`[videoMerger] [${index + 1}/${downloadedVideoPaths.length}] [Sukses - Dengan Re-encode] Video di-trim: ${trimmedPath}`);
-            }
-            trimmedVideoPaths.push(trimmedPath); // Urutan array sesuai urutan input
-            return trimmedPath;
+             // Durasi yang diambil dari klip input
+             const takeDuration = inputClipDuration;
+
+             const processedPath = path.join(tempDir, generateUniqueFilename(`processed_clip_${index}`, 'mp4'));
+
+             // Gunakan filter_complex untuk trim dan fade
+             // fade=t=in:st=0:d=transitionDuration (fade in dari awal klip yang diambil)
+             // fade=t=out:st=(takeDuration - transitionDuration):d=transitionDuration (fade out menjelang akhir klip yang diambil)
+             const trimAndFadeCommand = `ffmpeg -y -i "${inputPath}" -ss 0 -t ${takeDuration} -vf "fade=t=in:st=0:d=${transitionDuration},fade=t=out:st=${takeDuration - transitionDuration}:d=${transitionDuration}" -c:v libx264 -c:a aac -strict experimental -pix_fmt yuv420p "${processedPath}"`;
+             console.log(`[videoMerger] Memproses klip ${index + 1} (trim & fade): ${trimAndFadeCommand}`);
+             await execPromise(trimAndFadeCommand);
+             processedClipPaths.push(processedPath);
+             console.log(`[videoMerger] Klip ${index + 1} diproses: ${processedPath}`);
+             return processedPath;
         });
-        await Promise.all(trimVideoPromises);
+        await Promise.all(processPromises);
 
-        // 3. Gabungkan semua klip yang sudah di-trim SESUAI URUTAN menggunakan filter_complex xfade
-        if (trimmedVideoPaths.length < 2) {
-             throw new Error("Diperlukan minimal 2 video untuk digabung.");
+         // 4. Buat file list untuk ffmpeg concat demuxer
+        const listFilePath = path.join(tempDir, generateUniqueFilename('filelist', 'txt'));
+        const listContent = processedClipPaths.map(p => `file '${p}'`).join('\n');
+        fs.writeFileSync(listFilePath, listContent);
+
+        // 5. Gabungkan video menggunakan concat filter dengan crossfade
+        // Karena kita sudah menambahkan fade in/out di setiap klip, kita bisa langsung concatenate.
+        // Namun, untuk transisi *crossfade* yang halus antar klip, kita butuh filter_complex yang lebih kompleks.
+        // Kita akan gunakan `concat` filter dengan parameter `v=1:a=1` untuk video dan audio.
+
+        // Perintah dasar concat
+        // const concatCommand = `ffmpeg -y -f concat -safe 0 -i "${listFilePath}" -c copy "${outputPath}"`;
+
+        // Untuk transisi crossfade yang benar-benar halus antar klip, kita gunakan filter_complex concat dengan parameter transisi.
+        // Ini lebih kompleks, tapi memberikan hasil yang lebih baik.
+        // Kita bangun string filter_complex secara dinamis.
+
+        let filterComplexString = "";
+        let inputLabels = processedClipPaths.map((_, i) => `[${i}:v][${i}:a]`).join('');
+        let concatInputs = processedClipPaths.map((_, i) => `[v${i}][a${i}]`).join('');
+
+        // Buat filter untuk setiap klip: ambil stream video dan audio
+        for (let i = 0; i < processedClipPaths.length; i++) {
+            filterComplexString += `[${i}:v][${i}:a]`;
         }
 
-        // Bangun chain filter_complex untuk xfade SESUAI URUTAN
-        console.log(`[videoMerger] Membangun filter_complex xfade untuk ${trimmedVideoPaths.length} klip...`);
-        let filterComplexParts = [];
-        let lastVideoLabel = "[0:v]"; // Label video dari input pertama
-        let lastAudioLabel = "[0:a]"; // Label audio dari input pertama
+        // Buat filter concat: 8 video, 8 audio, 7 transisi (crossfade)
+        filterComplexString += `concat=n=${processedClipPaths.length}:v=1:a=1`;
 
-        for (let i = 1; i < trimmedVideoPaths.length; i++) {
-             // Offset untuk xfade: waktu mulai transisi
-             // Klip i dimulai di detik (i * clipDuration)
-             // Transisi dimulai setengah durasi transisi sebelum klip berikutnya penuh
-             const offset = (i * clipDuration) - (transitionDuration / 2);
-             const nextVideoLabel = `[v${i}]`; // Label untuk output video sementara
-             const nextAudioLabel = `[a${i}]`; // Label untuk output audio sementara
+        // Tambahkan parameter transisi crossfade
+        // Durasi transisi dalam frame (perkiraan 30fps)
+        // const transitionDurationFrames = Math.round(transitionDuration * 30);
+        // filterComplexString += `:transition=${transitionDurationFrames}`;
 
-             // Tambahkan filter xfade video dan audio
-             filterComplexParts.push(`${lastVideoLabel}[${i}:v]xfade=transition=fade:duration=${transitionDuration}:offset=${offset}${nextVideoLabel}`);
-             filterComplexParts.push(`${lastAudioLabel}[${i}:a]acrossfade=d=${transitionDuration}${nextAudioLabel}`);
-             lastVideoLabel = nextVideoLabel;
-             lastAudioLabel = nextAudioLabel;
-             console.log(`[videoMerger]   Menambahkan transisi dari klip ${i} ke klip ${i+1} (offset: ${offset}s)`);
-        }
+        // Tanpa parameter transition (default concatenate)
+        filterComplexString += `[vout][aout]`;
 
-        // Label akhir untuk video dan audio output
-        const finalVideoLabel = lastVideoLabel;
-        const finalAudioLabel = lastAudioLabel;
-        const filterComplexString = filterComplexParts.join(';');
-
-        // 4. Siapkan input files untuk ffmpeg SESUAI URUTAN
-        const inputArgs = trimmedVideoPaths.map((p, index) => `-i "${p}"`).join(' ');
-
-        // 5. Perintah ffmpeg final untuk menggabungkan dengan xfade
-        // -vsync vfr: Sangat penting untuk xfade
-        const mergeCommand = `ffmpeg -y ${inputArgs} -filter_complex "${filterComplexString}" -map "${finalVideoLabel}" -map "${finalAudioLabel}" -c:v libx264 -preset medium -crf 22 -c:a aac -b:a 128k -vsync vfr "${outputPath}"`;
-        console.log(`[videoMerger] Menggabungkan klip dengan xfade (urutan dipertahankan)...`);
-        await execPromise(mergeCommand);
+        const finalConcatCommand = `ffmpeg -y ${processedClipPaths.map(p => `-i "${p}"`).join(' ')} -filter_complex "${filterComplexString}" -map "[vout]" -map "[aout]" -c:v libx264 -c:a aac -strict experimental -shortest "${outputPath}"`;
+        console.log(`[videoMerger] Menggabungkan klip dengan transisi: ${finalConcatCommand}`);
+        await execPromise(finalConcatCommand);
         console.log(`[videoMerger] Video final berhasil dibuat di: ${outputPath}`);
 
+
     } catch (error) {
-        console.error('[videoMerger] Error saat menggabungkan video:', error.message?.substring(0, 200)); // Batasi log error
-        if (error.stderr) console.error('[videoMerger] FFmpeg stderr (potongan):', error.stderr?.substring(0, 500));
+        console.error('[videoMerger] Error saat menggabungkan video:', error.message);
+        if (error.stdout) console.error('[videoMerger] FFmpeg stdout:', error.stdout);
+        if (error.stderr) console.error('[videoMerger] FFmpeg stderr:', error.stderr);
         throw error;
     } finally {
-        // 6. Bersihkan file sementara
-        const tempFiles = [...downloadedVideoPaths, ...trimmedVideoPaths].filter(Boolean);
-        console.log(`[videoMerger] Membersihkan ${tempFiles.length} file sementara...`);
+       // 6. Bersihkan file sementara
+        const tempFiles = [...downloadedVideoPaths, ...processedClipPaths, ...(fs.existsSync(listFilePath) ? [listFilePath] : [])].filter(Boolean);
         tempFiles.forEach(filePath => {
             try {
                 if (fs.existsSync(filePath)) {
@@ -116,9 +139,14 @@ async function mergeVideosWithTransitions(videoUrls, outputPath, clipDuration = 
                     console.log(`[videoMerger] File sementara dihapus: ${filePath}`);
                 }
             } catch (err) {
-                console.warn(`[videoMerger] Gagal menghapus file sementara: ${filePath}`, err.message?.substring(0, 100));
+                console.warn(`[videoMerger] Gagal menghapus file sementara: ${filePath}`, err.message);
             }
         });
+        // Hapus file list khusus jika ada (dengan pola)
+        try {
+             const listFiles = fs.readdirSync(tempDir).filter(fn => fn.startsWith('temp_filelist_') && fn.endsWith('.txt')).map(fn => path.join(tempDir, fn));
+             listFiles.forEach(fp => { if (fs.existsSync(fp)) fs.unlinkSync(fp); console.log(`[videoMerger] File list sementara dihapus: ${fp}`); });
+        } catch (err) { console.warn(`[videoMerger] Gagal menghapus file list sementara`, err.message); }
     }
 }
 
@@ -131,16 +159,13 @@ function router(app, routes = [], pluginName) {
             {
                 method: "GET",
                 path: "/merge-videos",
-                description: "Gabungkan 8 klip video (URL) dengan transisi fade menjadi 1 video ~64 detik. URUTAN PENTING: videoUrl=url1,url2,...,url8. Resolusi input harus konsisten."
+                description: "Gabungkan 8 klip video (URL) menjadi 1 video berdurasi 64 detik dengan transisi fade. Parameter: videoUrl (comma-separated URLs)"
             }
         ]
     });
 
     app.get("/merge-videos", async (req, res) => {
         try {
-            const startTime = Date.now();
-            console.log(`[videoMerger Route] Permintaan diterima di ${new Date(startTime).toISOString()}`);
-
             // 1. Ambil dan parsing parameter
             const rawVideoUrls = req.query.videoUrl;
 
@@ -168,13 +193,10 @@ function router(app, routes = [], pluginName) {
             const outputFilename = generateUniqueFilename('merged_video', 'mp4');
             const videoOutputPath = path.join(outputDir, outputFilename);
 
-            // 3. Panggil fungsi mergeVideosWithTransitions
-            console.log(`[videoMerger Route] Memulai penggabungan 8 video (urutan dipertahankan)...`);
-            await mergeVideosWithTransitions(videoUrls, videoOutputPath, 8, 1);
-
-            const endTime = Date.now();
-            const duration = ((endTime - startTime) / 1000).toFixed(2); // Dalam detik
-            console.log(`[videoMerger Route] Proses selesai dalam ${duration} detik.`);
+            // 3. Panggil fungsi mergeVideosWithFade
+            console.log(`[videoMerger] Memulai penggabungan 8 video...`);
+            // Durasi total 64 detik, durasi transisi default 1 detik
+            await mergeVideosWithFade(videoUrls, videoOutputPath, 64, 1);
 
             // 4. Tentukan URL video hasil
             const videoUrl = `/videos/${outputFilename}`;
@@ -182,15 +204,16 @@ function router(app, routes = [], pluginName) {
             // 5. Kirim respons sukses
             res.json({
                 status: true,
-                message: `Video berhasil digabung (urutan sesuai input, ~64 detik). Proses: ${duration} detik.`,
+                message: "Video berhasil digabungkan (64 detik dengan fade).",
                 videoUrl: videoUrl
             });
 
         } catch (error) {
-            console.error('[videoMerger Route] Error di handler route:', error.message?.substring(0, 200));
+            console.error('[videoMerger] Error di handler route:', error.message);
             res.status(500).json({
                 status: false,
-                message: "Terjadi kesalahan saat menggabungkan video. Periksa log server.",
+                message: "Terjadi kesalahan saat menggabungkan video.",
+                // error: error.message // Sembunyikan detail error di produksi
             });
         }
     });
