@@ -29,7 +29,10 @@ function router(app, routes = [], pluginName) {
             )
         ).data;
 
-        res.json(ai);
+        res.json({
+            status: true,
+            result: ai.result
+        });
     });
 }
 
