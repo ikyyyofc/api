@@ -28,7 +28,7 @@ function router(app, routes = [], pluginName) {
 
         res.json({
             status: true,
-            result: ai.result
+            result: resp.response
         });
     });
 }
