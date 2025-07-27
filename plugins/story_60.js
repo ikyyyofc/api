@@ -18,7 +18,7 @@ function generateTaskId() {
 }
 
 // --- Core Video Generation Logic (txt2vid & txt2vidWithRetry remain largely the same) ---
-async function txt2vid(prompt, { model = "veo-3", auto_sound = false, auto_speech = false } = {}) {
+async function txt2vid(prompt, { model = "veo-3", auto_sound = true, auto_speech = true } = {}) {
     try {
         const _model = ["veo-3-fast", "veo-3"];
         if (!prompt) throw new Error("Prompt is required");
