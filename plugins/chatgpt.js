@@ -5,7 +5,11 @@ function router(app, routes = [], pluginName) {
     routes.push({
         plugin: pluginName, // Menggunakan nama file sebagai nama plugin
         endpoints: [
-            { method: "POST", path: "/chatgpt/post", description: "Post text data" }
+            {
+                method: "POST",
+                path: "/chatgpt/post",
+                description: "Post text data"
+            }
         ]
     });
 
@@ -17,7 +21,13 @@ function router(app, routes = [], pluginName) {
             });
         }
 
-        const ai = await askAI(req.body);
+        const ai = (
+            await axios.get(
+                `https://api.fasturl.link/aillm/gpt-4o?ask=${encodeURIComponent(
+                    req.body.user
+                )}&style=${encodeURIComponent(req.body.system)}`
+            )
+        ).data;
 
         res.json(ai);
     });
