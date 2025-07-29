@@ -23,7 +23,7 @@ function router(app, routes = [], pluginName) {
 
         const resp = await chatai(req.body.user, {
             system_prompt: req.body.system,
-            model: "gpt-4.1"
+            model: "claude-3.7"
         });
 
         res.json({
