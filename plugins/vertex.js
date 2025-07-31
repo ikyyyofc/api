@@ -1,4 +1,4 @@
-const vertex = require("../lib/vertexAI");
+const vertexAIInstance = require("../lib/vertexAI");
 
 function router(app, routes = [], pluginName) {
     routes.push({
@@ -9,9 +9,10 @@ function router(app, routes = [], pluginName) {
     });
 
     app.post("/vertex/chat", async (req, res) => {
-
-
-        res.json({status: true});
+      let body = req.body
+      const { message, history, fileBuffer, mode } = body;
+      if (!message && !fileBuffer) return res.json({status:false, result: "message/fileBuffer is required!"})
+      
     });
 }
 
