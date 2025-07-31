@@ -8,7 +8,7 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    app.post("/<endpoint>", async (req, res) => {
+    app.post("/vertex/chat", async (req, res) => {
 
 
         res.json({status: true});
