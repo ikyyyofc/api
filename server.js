@@ -7,6 +7,7 @@ class PluginBasedAPI {
     constructor() {
         this.app = express();
         this.app.use(express.json());
+        this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
         this.app.use(express.static(path.join(__dirname, "public")));
         this.plugins = [];
         this.routes = [];
@@ -57,7 +58,6 @@ class PluginBasedAPI {
 
     // Method untuk menjalankan server
     listen(port, callback) {
-        this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
         // Endpoint untuk mendapatkan informasi plugin dan route
         this.app.get("/api/plugins", (req, res) => {
             res.json({
