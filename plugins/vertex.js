@@ -1,4 +1,3 @@
-const multer = require("multer");
 const vertexAIInstance = require("../lib/vertexAI");
 
 function router(app, routes = [], pluginName) {
@@ -9,23 +8,38 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    const upload = multer({ storage: multer.memoryStorage() });
+    // POST /api/chat
+    app.post("/vertex/chat", async (req, res) => {
+        try {
+            const { system, message, history, fileBuffer } = req.body;
 
-    app.post("/vertex/chat", upload.single("file"), async (req, res) => {
-        const { system, message, history } = req.body;
-        const file = req.file;
+            if (!message && !fileBuffer) {
+                return res
+                    .status(400)
+                    .json({ error: "Message or file is required" });
+            }
 
-        const fileBufferBase64 = file ? file.buffer.toString("base64") : null;
+            // Selalu pake reasoning mode
+            const selectedModel = "gemini-2.5-pro";
 
-        const result = await vertexAIInstance.chat(message, {
-            model: "gemini-2.5-pro",
-            system_instruction: system,
-            history: history ? JSON.parse(history) : undefined,
-            file_buffer_base64: fileBufferBase64,
-            search: true
-        });
+            // Search selalu aktif
+            const enableSearch = true;
 
-        return res.status(200).json(result);
+            const result = await vertexAIInstance.chat(message, {
+                model: selectedModel,
+                system_instruction: system,
+                history: history,
+                file_buffer_base64: fileBuffer,
+                search: enableSearch
+            });
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error("Error di API route /api/chat:", error);
+            return res
+                .status(500)
+                .json({ error: error.message || "Internal Server Error" });
+        }
     });
 }
 
