@@ -1,6 +1,11 @@
 const vertexAIInstance = require("../lib/vertexAI");
-const multer = require("multer"); 
-const upload = multer({ storage: multer.memoryStorage() });
+const multer = require("multer");
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fieldSize: 10 * 1024 * 1024 // 10MB, atau sesuaikan
+    }
+});
 
 function router(app, routes = [], pluginName) {
     routes.push({
@@ -10,13 +15,10 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-
     app.post("/vertex/chat", upload.none(), async (req, res) => {
         try {
-
             const system = req.body.system;
             const message = req.body.message;
-
 
             let history = [];
             if (req.body.history) {
@@ -27,7 +29,6 @@ function router(app, routes = [], pluginName) {
                         "Gagal mem-parsing history, menggunakan array kosong:",
                         parseError.message
                     );
-
                 }
             }
 
@@ -41,16 +42,14 @@ function router(app, routes = [], pluginName) {
                     .json({ error: "Message or file is required" });
             }
 
-
             const selectedModel = "gemini-2.5-pro";
-
 
             const enableSearch = true;
 
             const result = await vertexAIInstance.chat(message, {
                 model: selectedModel,
                 system_instruction: system,
-                history: history, 
+                history: history,
                 file_buffer_base64: file_buffer_base64, // Gunakan string base64 langsung
                 search: enableSearch
             });
