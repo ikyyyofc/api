@@ -1,8 +1,5 @@
 const vertexAIInstance = require("../lib/vertexAI");
-const multer = require("multer"); // Tambahkan ini
-
-// Konfigurasi multer untuk menangani FormData
-// Karena semua data teks dan file base64 kecil kemungkinan disimpan di memory
+const multer = require("multer"); 
 const upload = multer({ storage: multer.memoryStorage() });
 
 function router(app, routes = [], pluginName) {
@@ -13,14 +10,14 @@ function router(app, routes = [], pluginName) {
         ]
     });
 
-    // POST /api/chat
+
     app.post("/vertex/chat", upload.none(), async (req, res) => {
         try {
-            // --- Ambil data dari FormData (req.body) ---
+
             const system = req.body.system;
             const message = req.body.message;
 
-            // --- Parsing history dari string JSON ---
+
             let history = [];
             if (req.body.history) {
                 try {
@@ -30,8 +27,7 @@ function router(app, routes = [], pluginName) {
                         "Gagal mem-parsing history, menggunakan array kosong:",
                         parseError.message
                     );
-                    // Bisa return error jika format wajib benar
-                    // return res.status(400).json({ error: "Invalid JSON format for history" });
+
                 }
             }
 
@@ -45,16 +41,16 @@ function router(app, routes = [], pluginName) {
                     .json({ error: "Message or file is required" });
             }
 
-            // Selalu pake reasoning mode
+
             const selectedModel = "gemini-2.5-pro";
 
-            // Search selalu aktif
+
             const enableSearch = true;
 
             const result = await vertexAIInstance.chat(message, {
                 model: selectedModel,
                 system_instruction: system,
-                history: history, // Gunakan history yang sudah diparse
+                history: history, 
                 file_buffer_base64: file_buffer_base64, // Gunakan string base64 langsung
                 search: enableSearch
             });
