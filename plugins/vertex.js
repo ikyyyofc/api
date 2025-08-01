@@ -29,7 +29,7 @@ function router(app, routes = [], pluginName) {
                 model: selectedModel,
                 system_instruction: system,
                 history: history,
-                file_buffer_base64: fileBuffer.toString("base64"),
+                file_buffer_base64: fileBuffer,
                 search: enableSearch
             });
 
