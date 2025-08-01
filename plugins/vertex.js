@@ -1,10 +1,9 @@
 const vertexAIInstance = require("../lib/vertexAI");
-const multer = require('multer'); // Tambahkan ini
+const multer = require("multer"); // Tambahkan ini
 
 // Konfigurasi multer untuk menangani FormData
 // Karena semua data teks dan file base64 kecil kemungkinan disimpan di memory
 const upload = multer({ storage: multer.memoryStorage() });
-
 
 function router(app, routes = [], pluginName) {
     routes.push({
@@ -37,7 +36,8 @@ function router(app, routes = [], pluginName) {
             }
 
             // --- fileBuffer dari FormData sudah berupa string base64 ---
-            const file_buffer_base64 = req.body.fileBuffer;
+            const file_buffer_base64 =
+                req.body.fileBuffer !== "null" ? req.body.fileBuffer : null;
 
             if (!message && !file_buffer_base64) {
                 return res
