@@ -1,4 +1,10 @@
 const vertexAIInstance = require("../lib/vertexAI");
+const multer = require('multer'); // Tambahkan ini
+
+// Konfigurasi multer untuk menangani FormData
+// Karena semua data teks dan file base64 kecil kemungkinan disimpan di memory
+const upload = multer({ storage: multer.memoryStorage() });
+
 
 function router(app, routes = [], pluginName) {
     routes.push({
@@ -9,7 +15,7 @@ function router(app, routes = [], pluginName) {
     });
 
     // POST /api/chat
-    app.post("/vertex/chat", async (req, res) => {
+    app.post("/vertex/chat", upload.none(), async (req, res) => {
         try {
             // --- Ambil data dari FormData (req.body) ---
             const system = req.body.system;
