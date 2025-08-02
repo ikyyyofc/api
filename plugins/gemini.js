@@ -292,7 +292,7 @@ let chatWithGemini = async (data_msg, newMsg) => {
             model: "gemini-2.5-pro",
             search: true
         });
-        return resp[0].content.parts[resp[0].content.parts.length - 1].text;
+        return resp[0].content.parts.map(a => a.text).join("\n");
     } catch (er) {
         console.error(er);
         return chatWithGPT(data_msg);
