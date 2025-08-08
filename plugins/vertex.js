@@ -42,7 +42,7 @@ function router(app, routes = [], pluginName) {
                     .json({ error: "Message or file is required" });
             }
 
-            const selectedModel = "gemini-2.5-pro";
+            const selectedModel = "gemini-2.5-flash";
 
             const enableSearch = true;
 
