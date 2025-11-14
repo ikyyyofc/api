@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>IkyyOFC API - Documentation</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+
+    input, textarea, button {
+      user-select: text;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0a0e1a;
+      --bg-secondary: #0f1419;
+      --surface: rgba(30, 41, 59, 0.6);
+      --card: rgba(51, 65, 85, 0.4);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(71, 85, 105, 0.5);
+      --glow: rgba(99, 102, 241, 0.3);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 500px;
+      background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding-bottom: 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(15, 20, 25, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 24px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 32px;
+      filter: drop-shadow(0 0 10px var(--glow));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .header-subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      display: none;
+    }
+
+    .stat-card:active {
+      transform: scale(0.98);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Search */
+    .search-box {
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 16px 48px 16px 20px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.3s;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--glow), 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* Category */
+    .category {
+      margin-bottom: 16px;
+    }
+
+    .category:nth-child(1) { animation-delay: 0s; }
+    .category:nth-child(2) { animation-delay: 0s; }
+    .category:nth-child(3) { animation-delay: 0s; }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .category-header::before {
+      display: none;
+    }
+
+    .category-header:active {
+      transform: scale(0.99);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .category-badge {
+      background: var(--primary);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .category-icon {
+      font-size: 20px;
+    }
+
+    .chevron {
+      transition: transform 0.3s;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+
+    /* Endpoints */
+    .endpoints {
+      display: grid;
+      gap: 10px;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .endpoints.show {
+      opacity: 1;
+      max-height: 5000px;
+    }
+
+    .endpoint-card {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .endpoint-card::after {
+      display: none;
+    }
+
+    .endpoint-card:active {
+      transform: scale(0.99);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .endpoint-card.expanded {
+      background: rgba(99, 102, 241, 0.03);
+      border-color: var(--primary);
+    }
+
+    .endpoint-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+      transition: margin 0.2s;
+    }
+
+    .endpoint-card.expanded .endpoint-main {
+      margin-bottom: 12px;
+    }
+
+    .method-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .method-GET { background: var(--success); color: white; }
+    .method-POST { background: var(--primary); color: white; }
+    .method-PUT { background: var(--warning); color: white; }
+    .method-DELETE { background: var(--danger); color: white; }
+    .method-PATCH { background: #8b5cf6; color: white; }
+
+    .endpoint-path {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--text);
+      word-break: break-all;
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .endpoint-details {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+
+    .endpoint-card.expanded .endpoint-details {
+      max-height: 2000px;
+      opacity: 1;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-section {
+      margin-bottom: 12px;
+    }
+
+    .detail-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    .detail-label {
+      color: var(--text-muted);
+      min-width: 50px;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: var(--text);
+      word-break: break-all;
+      flex: 1;
+      font-size: 12px;
+    }
+
+    /* Test Form */
+    .test-form {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .param-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* Parameters Documentation */
+    .description-text {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .params-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .param-item {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      border-left: 3px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .param-item:hover {
+      border-color: var(--primary);
+    }
+
+    .param-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .param-name {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-weight: 700;
+      color: var(--primary-light);
+      font-size: 13px;
+    }
+
+    .param-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--card);
+      color: var(--text-muted);
+    }
+
+    .param-badge.required {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+    }
+
+    .param-type {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .param-description {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .param-location {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .param-type-label {
+      font-size: 10px;
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      font-weight: normal;
+    }
+
+    .required-star {
+      color: var(--danger);
+      margin-left: 2px;
+      font-weight: bold;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      outline: none;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      box-shadow: 0 4px 16px var(--glow);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px var(--glow);
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+    }
+
+    .response-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 300px;
+      overflow: auto;
+    }
+
+    .response-box pre {
+      margin: 0;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .response-success {
+      border-color: var(--success);
+    }
+
+    .response-error {
+      border-color: var(--danger);
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+      box-shadow: 0 4px 20px var(--glow);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+      z-index: 100;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 10px;
+      flex: 1;
+      transition: all 0.2s;
+      padding: 4px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .nav-item:active {
+      transform: scale(0.9);
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 0 0 2px 2px;
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+
+    .nav-item.active .nav-icon {
+      transform: scale(1.05);
+      filter: drop-shadow(0 2px 6px var(--glow));
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      padding: 12px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Responsive */
+    @media (min-width: 768px) {
+      .header h1 {
+        font-size: 36px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .endpoint-path {
+        font-size: 14px;
+      }
+
+      .button-group {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1>
+          <span class="logo-icon">⚡</span> IkyyOFC API
+        </h1>
+        <div class="header-subtitle">
+          <span class="status-dot"></span>
+          <span>{{ loading ? 'Loading...' : endpoints.length + ' endpoints ready' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Container -->
+    <div class="container">
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value">{{ categories.length }}</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ endpoints.length }}</div>
+          <div class="stat-label">Endpoints</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ methodCounts.GET || 0 }}</div>
+          <div class="stat-label">GET</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ methodCounts.POST || 0 }}</div>
+          <div class="stat-label">POST</div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search endpoints..."
+          v-model="searchQuery"
+          @input="handleSearch"
+        >
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading endpoints...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="filteredCategories.length === 0 && !loading" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p v-if="searchQuery">No endpoints found for "{{ searchQuery }}"</p>
+        <p v-else>No endpoints available. Add plugins to get started!</p>
+      </div>
+
+      <!-- Categories -->
+      <div v-else>
+        <div v-for="category in filteredCategories" :key="category.name" class="category">
+          <div class="category-header" @click="toggleCategory(category.name)">
+            <div class="category-title">
+              <span class="category-icon">{{ getCategoryIcon(category.name) }}</span>
+              <span>{{ category.name }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="category-badge">{{ category.endpoints.length }}</span>
+              <span class="chevron" :class="{ open: openCategories.includes(category.name) }">▼</span>
+            </div>
+          </div>
+
+          <div class="endpoints" :class="{ show: openCategories.includes(category.name) }">
+            <div 
+              v-for="endpoint in category.endpoints" 
+              :key="endpoint.path"
+              class="endpoint-card"
+              :class="{ expanded: expandedEndpoint === endpoint.path }"
+              @click="toggleEndpoint(endpoint.path)"
+            >
+              <div class="endpoint-main">
+                <span class="method-badge" :class="'method-' + endpoint.method">
+                  {{ endpoint.method }}
+                </span>
+                <span class="endpoint-path">{{ endpoint.path }}</span>
+              </div>
+
+              <div class="endpoint-details">
+                <!-- Description -->
+                <div v-if="endpoint.description" class="detail-section">
+                  <div class="detail-section-title">📝 Description</div>
+                  <div class="description-text">{{ endpoint.description }}</div>
+                </div>
+
+                <!-- Parameters Documentation -->
+                <div v-if="endpoint.params && endpoint.params.length > 0" class="detail-section">
+                  <div class="detail-section-title">📋 Parameters</div>
+                  <div class="params-list">
+                    <div v-for="param in endpoint.params" :key="param.name" class="param-item">
+                      <div class="param-header">
+                        <span class="param-name">{{ param.name }}</span>
+                        <span class="param-badge" :class="{ required: param.required }">
+                          {{ param.required ? 'required' : 'optional' }}
+                        </span>
+                        <span class="param-type">{{ param.type }}</span>
+                      </div>
+                      <div class="param-description">{{ param.description }}</div>
+                      <div v-if="param.location" class="param-location">
+                        📍 Location: {{ param.location }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="detail-section">
+                  <div class="detail-section-title">📍 Endpoint Info</div>
+                  <div class="detail-row">
+                    <span class="detail-label">File:</span>
+                    <span class="detail-value">{{ endpoint.file }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">URL:</span>
+                    <span class="detail-value">{{ baseUrl }}{{ endpoint.path }}</span>
+                  </div>
+                </div>
+
+                <!-- Test Section -->
+                <div class="detail-section">
+                  <div class="detail-section-title">🧪 Test Endpoint</div>
+                  
+                  <div class="test-form" @click.stop>
+                    <!-- Auto-generate form based on params -->
+                    <div v-if="endpoint.params && endpoint.params.length > 0">
+                      <div v-for="param in endpoint.params" :key="param.name" class="form-group">
+                        <label class="form-label">
+                          {{ param.name }}
+                          <span v-if="param.required" class="required-star">*</span>
+                          <span class="param-type-label">{{ param.type }}</span>
+                        </label>
+                        <input 
+                          v-if="['string', 'number'].includes(param.type)"
+                          :type="param.type === 'number' ? 'number' : 'text'"
+                          class="form-input"
+                          v-model="testData[endpoint.path].formData[param.name]"
+                          :placeholder="param.description"
+                          :required="param.required"
+                        >
+                        <textarea
+                          v-else-if="param.type === 'object' || param.type === 'array'"
+                          class="form-input"
+                          v-model="testData[endpoint.path].formData[param.name]"
+                          :placeholder="'JSON ' + param.type + ': ' + param.description"
+                          rows="3"
+                        ></textarea>
+                        <div class="param-hint">{{ param.description }}</div>
+                      </div>
+                    </div>
+
+                    <!-- Fallback: Manual input -->
+                    <div v-else>
+                      <!-- Query Params for GET -->
+                      <div v-if="endpoint.method === 'GET'" class="form-group">
+                        <label class="form-label">Query Parameters (Optional)</label>
+                        <input 
+                          type="text" 
+                          class="form-input"
+                          v-model="testData[endpoint.path].query"
+                          placeholder='id=123&name=test'
+                        >
+                        <div class="param-hint">Format: key=value&key2=value2</div>
+                      </div>
+
+                      <!-- Body for POST/PUT/PATCH -->
+                      <div v-if="['POST', 'PUT', 'PATCH'].includes(endpoint.method)" class="form-group">
+                        <label class="form-label">Request Body (JSON)</label>
+                        <textarea 
+                          class="form-input form-textarea"
+                          v-model="testData[endpoint.path].body"
+                          placeholder='{"key": "value", "name": "test"}'
+                        ></textarea>
+                        <div class="param-hint">Example: {"url": "https://example.com", "quality": "720p"}</div>
+                      </div>
+                    </div>
+
+                    <!-- Headers (Optional) -->
+                    <div class="form-group">
+                      <label class="form-label">Custom Headers (Optional)</label>
+                      <textarea 
+                        class="form-input"
+                        v-model="testData[endpoint.path].headers"
+                        placeholder='{"Authorization": "Bearer token"}'
+                        style="min-height: 60px;"
+                      ></textarea>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="button-group">
+                      <button class="btn btn-primary" @click="testEndpoint(endpoint)">
+                        🚀 Send Request
+                      </button>
+                      <button class="btn btn-secondary" @click="copyToClipboard(endpoint)">
+                        📋 Copy cURL
+                      </button>
+                    </div>
+
+                    <!-- Response -->
+                    <div v-if="testData[endpoint.path].response" 
+                         class="response-box"
+                         :class="{
+                           'response-success': testData[endpoint.path].responseStatus < 400,
+                           'response-error': testData[endpoint.path].responseStatus >= 400
+                         }">
+                      <pre>{{ testData[endpoint.path].response }}</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+      <a href="#" class="nav-item active">
+        <span class="nav-icon">📚</span>
+        <span>Docs</span>
+      </a>
+      <a href="/api" class="nav-item" target="_blank">
+        <span class="nav-icon">🔌</span>
+        <span>API</span>
+      </a>
+      <a href="#" class="nav-item" @click.prevent="refreshData">
+        <span class="nav-icon">🔄</span>
+        <span>Refresh</span>
+      </a>
+    </nav>
+
+    <!-- Toast -->
+    <div class="toast" :class="{ show: toast.show }">
+      {{ toast.message }}
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          loading: true,
+          endpoints: [],
+          categories: [],
+          openCategories: [],
+          expandedEndpoint: null,
+          searchQuery: '',
+          baseUrl: window.location.origin,
+          methodCounts: {},
+          testData: {},
+          toast: {
+            show: false,
+            message: ''
+          }
+        };
+      },
+      computed: {
+        filteredCategories() {
+          if (!this.searchQuery) return this.categories;
+          
+          const query = this.searchQuery.toLowerCase();
+          return this.categories
+            .map(cat => ({
+              ...cat,
+              endpoints: cat.endpoints.filter(ep => 
+                ep.path.toLowerCase().includes(query) ||
+                ep.method.toLowerCase().includes(query) ||
+                cat.name.toLowerCase().includes(query)
+              )
+            }))
+            .filter(cat => cat.endpoints.length > 0);
+        }
+      },
+      methods: {
+        async fetchEndpoints() {
+          try {
+            this.loading = true;
+            const response = await fetch('/api');
+            const data = await response.json();
+            
+            if (data.success) {
+              this.endpoints = Object.values(data.endpoints).flat();
+              this.processCategories(data.endpoints);
+              this.calculateMethodCounts();
+              this.initTestData();
+            }
+          } catch (error) {
+            console.error('Error fetching endpoints:', error);
+            this.showToast('Failed to load endpoints');
+          } finally {
+            this.loading = false;
+          }
+        },
+        processCategories(endpointsData) {
+          this.categories = Object.entries(endpointsData).map(([name, endpoints]) => ({
+            name,
+            endpoints: endpoints.sort((a, b) => a.path.localeCompare(b.path))
+          }));
+          
+          if (this.categories.length > 0) {
+            this.openCategories = [this.categories[0].name];
+          }
+        },
+        calculateMethodCounts() {
+          this.methodCounts = this.endpoints.reduce((acc, ep) => {
+            acc[ep.method] = (acc[ep.method] || 0) + 1;
+            return acc;
+          }, {});
+        },
+        initTestData() {
+          this.endpoints.forEach(endpoint => {
+            this.testData[endpoint.path] = {
+              query: '',
+              body: '',
+              headers: '',
+              formData: {},
+              response: null,
+              responseStatus: null
+            };
+          });
+        },
+        toggleCategory(name) {
+          const index = this.openCategories.indexOf(name);
+          if (index > -1) {
+            this.openCategories.splice(index, 1);
+          } else {
+            this.openCategories.push(name);
+          }
+        },
+        toggleEndpoint(path) {
+          this.expandedEndpoint = this.expandedEndpoint === path ? null : path;
+        },
+        getCategoryIcon(name) {
+          const icons = {
+            ai: '🤖',
+            downloader: '⬇️',
+            sticker: '🎨',
+            tools: '🛠️',
+            user: '👤',
+            default: '📦'
+          };
+          return icons[name.toLowerCase()] || icons.default;
+        },
+        async testEndpoint(endpoint) {
+          const testInfo = this.testData[endpoint.path];
+          
+          try {
+            let url = `${this.baseUrl}${endpoint.path}`;
+            const options = {
+              method: endpoint.method,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            };
+
+            // Add custom headers
+            if (testInfo.headers) {
+              try {
+                const customHeaders = JSON.parse(testInfo.headers);
+                options.headers = { ...options.headers, ...customHeaders };
+              } catch (e) {
+                this.showToast('Invalid headers JSON format');
+                return;
+              }
+            }
+
+            // If we have params defined, build request from formData
+            if (endpoint.params && endpoint.params.length > 0) {
+              // Build body from formData for POST/PUT/PATCH
+              if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+                const bodyData = {};
+                endpoint.params.forEach(param => {
+                  const value = testInfo.formData[param.name];
+                  if (value !== undefined && value !== '') {
+                    // Try to parse JSON for object/array types
+                    if (['object', 'array'].includes(param.type)) {
+                      try {
+                        bodyData[param.name] = JSON.parse(value);
+                      } catch (e) {
+                        bodyData[param.name] = value;
+                      }
+                    } else if (param.type === 'number') {
+                      bodyData[param.name] = Number(value);
+                    } else {
+                      bodyData[param.name] = value;
+                    }
+                  }
+                });
+                options.body = JSON.stringify(bodyData);
+              } 
+              // Build query string for GET
+              else if (endpoint.method === 'GET') {
+                const queryParams = [];
+                endpoint.params.forEach(param => {
+                  const value = testInfo.formData[param.name];
+                  if (value !== undefined && value !== '') {
+                    queryParams.push(`${param.name}=${encodeURIComponent(value)}`);
+                  }
+                });
+                if (queryParams.length > 0) {
+                  url += '?' + queryParams.join('&');
+                }
+              }
+            } else {
+              // Fallback to manual input
+              if (endpoint.method === 'GET' && testInfo.query) {
+                url += (url.includes('?') ? '&' : '?') + testInfo.query;
+              }
+
+              if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+                if (testInfo.body) {
+                  try {
+                    JSON.parse(testInfo.body);
+                    options.body = testInfo.body;
+                  } catch (e) {
+                    this.showToast('Invalid JSON format in body');
+                    return;
+                  }
+                } else {
+                  options.body = JSON.stringify({});
+                }
+              }
+            }
+
+            const response = await fetch(url, options);
+            const data = await response.json();
+            
+            testInfo.responseStatus = response.status;
+            testInfo.response = JSON.stringify(data, null, 2);
+            
+            this.showToast(response.ok ? '✅ Request successful!' : '⚠️ Request failed');
+          } catch (error) {
+            testInfo.responseStatus = 500;
+            testInfo.response = JSON.stringify({
+              error: error.message,
+              message: 'Failed to send request. Check console for details.'
+            }, null, 2);
+            this.showToast('❌ Request failed');
+          }
+        },
+        copyToClipboard(endpoint) {
+          const testInfo = this.testData[endpoint.path];
+          let curl = `curl -X ${endpoint.method} "${this.baseUrl}${endpoint.path}"`;
+          
+          // Add headers
+          curl += ` \\\n  -H "Content-Type: application/json"`;
+          
+          if (testInfo.headers) {
+            try {
+              const headers = JSON.parse(testInfo.headers);
+              Object.entries(headers).forEach(([key, value]) => {
+                curl += ` \\\n  -H "${key}: ${value}"`;
+              });
+            } catch (e) {}
+          }
+
+          // Build from params if available
+          if (endpoint.params && endpoint.params.length > 0) {
+            if (endpoint.method === 'GET') {
+              const queryParams = [];
+              endpoint.params.forEach(param => {
+                const value = testInfo.formData[param.name];
+                if (value !== undefined && value !== '') {
+                  queryParams.push(`${param.name}=${encodeURIComponent(value)}`);
+                }
+              });
+              if (queryParams.length > 0) {
+                curl = curl.replace(endpoint.path, `${endpoint.path}?${queryParams.join('&')}`);
+              }
+            } else if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+              const bodyData = {};
+              endpoint.params.forEach(param => {
+                const value = testInfo.formData[param.name];
+                if (value !== undefined && value !== '') {
+                  if (['object', 'array'].includes(param.type)) {
+                    try {
+                      bodyData[param.name] = JSON.parse(value);
+                    } catch (e) {
+                      bodyData[param.name] = value;
+                    }
+                  } else if (param.type === 'number') {
+                    bodyData[param.name] = Number(value);
+                  } else {
+                    bodyData[param.name] = value;
+                  }
+                }
+              });
+              curl += ` \\\n  -d '${JSON.stringify(bodyData)}'`;
+            }
+          } else {
+            // Fallback to manual input
+            if (endpoint.method === 'GET' && testInfo.query) {
+              curl = curl.replace(endpoint.path, `${endpoint.path}?${testInfo.query}`);
+            }
+
+            if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
+              const body = testInfo.body || '{}';
+              curl += ` \\\n  -d '${body}'`;
+            }
+          }
+          
+          navigator.clipboard.writeText(curl).then(() => {
+            this.showToast('📋 cURL copied to clipboard!');
+          });
+        },
+        handleSearch() {
+          if (this.searchQuery) {
+            this.openCategories = this.filteredCategories.map(cat => cat.name);
+          }
+        },
+        refreshData() {
+          this.expandedEndpoint = null;
+          this.searchQuery = '';
+          this.fetchEndpoints();
+          this.showToast('🔄 Refreshed!');
+        },
+        showToast(message) {
+          this.toast.message = message;
+          this.toast.show = true;
+          setTimeout(() => {
+            this.toast.show = false;
+          }, 3000);
+        }
+      },
+      mounted() {
+        this.fetchEndpoints();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
