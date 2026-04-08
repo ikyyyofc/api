@@ -6,7 +6,9 @@
     <title>DevBot - Plugin Generator</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- PERBAIKAN: Mengunci versi Marked.js ke 11.2.0 agar kompatibel dengan Renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js"></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -60,8 +62,12 @@
             code(code, info) {
                 const language = info || 'plaintext';
                 const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
-                const highlighted = hljs.highlight(code, { language: validLanguage }).value;
-                const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // Mencegah error jika data kosong
+                if (!code) return '';
+
+                const highlighted = hljs.highlight(String(code), { language: validLanguage }).value;
+                const escapedCode = String(code).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
                 return `
                     <div class="relative group mt-4 mb-4 rounded-lg overflow-hidden bg-[#282c34] border border-gray-700 shadow-sm">
@@ -131,7 +137,9 @@
                 ? `<div class="bg-blue-600 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-user text-white"></i></div>`
                 : `<div class="bg-slate-800 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-robot text-white"></i></div>`;
 
-            const displayContent = isUser ? content.replace(/\n/g, '<br>') : marked.parse(content);
+            // PERBAIKAN: Memastikan content selalu string sebelum diparsing
+            const safeContent = String(content || "");
+            const displayContent = isUser ? safeContent.replace(/\n/g, '<br>') : marked.parse(safeContent);
 
             messageDiv.innerHTML = `
                 ${iconHTML}
@@ -148,7 +156,7 @@
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'loading-indicator';
             loadingDiv.className = 'flex items-center gap-2 text-gray-500 text-sm ml-12 mb-4';
-            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> DevBot sedang memikirkan kode (Bisa memakan waktu 10-30 detik)...';
+            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> DevBot sedang memikirkan kode...';
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -178,15 +186,13 @@
                     body: JSON.stringify({ messages: conversationHistory })
                 });
 
-                // PERBAIKAN: Baca sebagai teks dulu agar tidak crash jika balasan bukan JSON
                 const responseText = await response.text();
                 
                 let data;
                 try {
                     data = JSON.parse(responseText);
                 } catch (parseError) {
-                    console.error("Respons mentah dari server:", responseText);
-                    throw new Error("Server mengirim balasan yang rusak atau koneksi terputus. (Cek log di console browser)");
+                    throw new Error("Server gagal memproses JSON. Cek log server.");
                 }
 
                 hideLoading();
@@ -199,19 +205,16 @@
                 }
             } catch (error) {
                 hideLoading();
-                // PERBAIKAN: Tampilkan error apa adanya ke layar untuk mempermudah perbaikan
                 addMessage('assistant', `*Error Sistem: ${error.message}*`);
-                console.error("Detail Error:", error);
             } finally {
                 sendBtn.disabled = false;
             }
         });
 
-        // PERBAIKAN: Mencegah error refresh page di mobile saat menekan ENTER
         messageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendBtn.click(); // Lebih stabil daripada dispatchEvent
+                sendBtn.click(); 
             }
         });
     </script>
