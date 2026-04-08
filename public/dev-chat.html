@@ -4,14 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DevBot - Plugin Generator</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Marked.js (Markdown Parser) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js (Syntax Highlighting) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        .markdown-body pre { background-color: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem;}
-        .markdown-body code { font-family: monospace; }
+        /* Styling tambahan untuk Markdown */
         .markdown-body p { margin-bottom: 0.75rem; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-body code:not(.hljs) { background-color: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: #ef4444;}
+        
+        /* Custom scrollbar untuk tag pre */
+        pre::-webkit-scrollbar { height: 8px; }
+        pre::-webkit-scrollbar-track { background: #282c34; border-radius: 4px; }
+        pre::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        pre::-webkit-scrollbar-thumb:hover { background: #6b7280; }
     </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col font-sans">
@@ -25,7 +42,7 @@
                 <p class="text-xs text-slate-400">Asisten Pembuat Plugin API</p>
             </div>
         </div>
-        <a href="/docs" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold transition">Lihat API Docs</a>
+        <a href="/docs" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold transition">Lihat API Docs</a>
     </header>
 
     <!-- Chat Container -->
@@ -36,7 +53,7 @@
                 <i class="fa-solid fa-robot text-white"></i>
             </div>
             <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
-                <p class="text-gray-800">Halo! Saya DevBot, AI yang telah diintegrasikan dengan *codebase* proyek ini. <br><br>Saya sudah membaca struktur <code>server.js</code> dan format plugin Anda. Ingin membuat plugin apa hari ini?</p>
+                <p class="text-gray-800">Halo! Saya DevBot, AI yang telah diintegrasikan dengan kode proyek ini. <br><br>Saya sudah membaca struktur plugin Anda. Ingin membuat plugin apa hari ini?</p>
             </div>
         </div>
     </main>
@@ -44,7 +61,7 @@
     <!-- Input Area -->
     <footer class="bg-white p-4 border-t border-gray-300">
         <form id="chat-form" class="max-w-4xl mx-auto relative flex items-end gap-2">
-            <textarea id="message-input" rows="1" placeholder="Misal: Buatkan saya plugin untuk download video TikTok..." class="w-full bg-gray-100 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32 overflow-y-auto" required></textarea>
+            <textarea id="message-input" rows="1" placeholder="Misal: Buatkan saya plugin untuk mencari data cuaca..." class="w-full bg-gray-100 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32 overflow-y-auto" required></textarea>
             <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl h-[48px] w-[48px] flex items-center justify-center shrink-0 transition">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -52,13 +69,86 @@
     </footer>
 
     <script>
+        // ==========================================
+        // KONFIGURASI MARKDOWN & HIGHLIGHT.JS
+        // ==========================================
+        const renderer = {
+            code(code, info) {
+                const language = info || 'plaintext';
+                const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
+                const highlighted = hljs.highlight(code, { language: validLanguage }).value;
+                
+                // Escape code untuk disembunyikan di textarea (agar aman dicopy)
+                const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                return `
+                    <div class="relative group mt-4 mb-4 rounded-lg overflow-hidden bg-[#282c34] border border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-center px-4 py-2 bg-[#21252b] text-xs text-gray-400 border-b border-gray-700">
+                            <span class="uppercase font-bold tracking-wider">${validLanguage}</span>
+                            <button class="flex items-center gap-1.5 hover:text-white transition-colors" onclick="copyCode(this)" title="Salin Kode">
+                                <i class="fa-regular fa-copy"></i> <span class="copy-text">Salin</span>
+                            </button>
+                        </div>
+                        <pre class="p-4 overflow-x-auto text-[13px] leading-relaxed"><code class="hljs ${validLanguage}">${highlighted}</code></pre>
+                        <textarea class="hidden-code" style="display:none;">${escapedCode}</textarea>
+                    </div>
+                `;
+            }
+        };
+        marked.use({ renderer });
+
+        // ==========================================
+        // FUNGSI COPY CODE (Aman untuk iframe)
+        // ==========================================
+        window.copyCode = function(btn) {
+            const container = btn.closest('.relative');
+            const textArea = container.querySelector('.hidden-code');
+            
+            // Buat elemen textarea sementara
+            const tempTextArea = document.createElement('textarea');
+            // Decode HTML entities balik ke teks asli sebelum di-copy
+            const txt = document.createElement("textarea");
+            txt.innerHTML = textArea.innerHTML;
+            tempTextArea.value = txt.value;
+            
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                // Menggunakan execCommand agar kompatibel dan bebas blokir iframe
+                document.execCommand('copy');
+                
+                // Ubah UI Tombol menjadi Sukses
+                const textSpan = btn.querySelector('.copy-text');
+                const icon = btn.querySelector('i');
+                const originalText = textSpan.innerText;
+                const originalIcon = icon.className;
+                
+                textSpan.innerText = 'Tersalin!';
+                icon.className = 'fa-solid fa-check text-green-400';
+                
+                setTimeout(() => {
+                    textSpan.innerText = originalText;
+                    icon.className = originalIcon;
+                }, 2000);
+            } catch (err) {
+                console.error('Gagal menyalin kode:', err);
+                alert('Gagal menyalin kode. Browser Anda mungkin tidak mendukung.');
+            } finally {
+                document.body.removeChild(tempTextArea);
+            }
+        };
+
+
+        // ==========================================
+        // LOGIKA CHAT & UI
+        // ==========================================
         const chatBox = document.getElementById('chat-box');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
         let conversationHistory = [];
 
-        // Auto resize textarea
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
@@ -66,7 +156,6 @@
 
         function addMessage(role, content) {
             const isUser = role === 'user';
-            
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex items-start gap-3 w-full md:w-5/6 ${isUser ? 'ml-auto flex-row-reverse' : ''}`;
             
@@ -74,12 +163,12 @@
                 ? `<div class="bg-blue-600 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-user text-white"></i></div>`
                 : `<div class="bg-slate-800 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-robot text-white"></i></div>`;
 
-            // Parse Markdown untuk AI
+            // Parsing markdown untuk pesan assistant
             const displayContent = isUser ? content.replace(/\n/g, '<br>') : marked.parse(content);
 
             messageDiv.innerHTML = `
                 ${iconHTML}
-                <div class="${isUser ? 'bg-blue-100 text-blue-900' : 'bg-white text-gray-800'} p-4 rounded-lg shadow border border-gray-200 markdown-body overflow-hidden">
+                <div class="${isUser ? 'bg-blue-100 text-blue-900' : 'bg-white text-gray-800'} p-4 rounded-lg shadow border border-gray-200 markdown-body overflow-hidden w-full">
                     ${displayContent}
                 </div>
             `;
@@ -92,7 +181,7 @@
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'loading-indicator';
             loadingDiv.className = 'flex items-center gap-2 text-gray-500 text-sm ml-12 mb-4';
-            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> DevBot sedang memikirkan kode...';
+            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> DevBot sedang memikirkan kode...';
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -107,12 +196,10 @@
             const message = messageInput.value.trim();
             if (!message) return;
 
-            // Reset UI
             messageInput.value = '';
             messageInput.style.height = 'auto';
             sendBtn.disabled = true;
 
-            // Tambah ke UI & History
             addMessage('user', message);
             conversationHistory.push({ role: 'user', content: message });
             showLoading();
@@ -141,7 +228,6 @@
             }
         });
 
-        // Submit dengan Enter (kecuali Shift+Enter)
         messageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
