@@ -5,26 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DevBot - Plugin Generator</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Marked.js (Markdown Parser) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
-    <!-- Highlight.js (Syntax Highlighting) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        /* Styling tambahan untuk Markdown */
         .markdown-body p { margin-bottom: 0.75rem; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
         .markdown-body code:not(.hljs) { background-color: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: #ef4444;}
-        
-        /* Custom scrollbar untuk tag pre */
         pre::-webkit-scrollbar { height: 8px; }
         pre::-webkit-scrollbar-track { background: #282c34; border-radius: 4px; }
         pre::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
@@ -33,7 +24,6 @@
 </head>
 <body class="bg-gray-100 h-screen flex flex-col font-sans">
 
-    <!-- Header -->
     <header class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-robot text-2xl text-blue-400"></i>
@@ -45,9 +35,7 @@
         <a href="/docs" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold transition">Lihat API Docs</a>
     </header>
 
-    <!-- Chat Container -->
     <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4" id="chat-box">
-        <!-- Initial Message -->
         <div class="flex items-start gap-3 w-full md:w-3/4">
             <div class="bg-slate-800 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-robot text-white"></i>
@@ -58,10 +46,9 @@
         </div>
     </main>
 
-    <!-- Input Area -->
     <footer class="bg-white p-4 border-t border-gray-300">
         <form id="chat-form" class="max-w-4xl mx-auto relative flex items-end gap-2">
-            <textarea id="message-input" rows="1" placeholder="Misal: Buatkan saya plugin untuk mencari data cuaca..." class="w-full bg-gray-100 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32 overflow-y-auto" required></textarea>
+            <textarea id="message-input" rows="1" placeholder="Ketik perintah AI disini..." class="w-full bg-gray-100 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none max-h-32 overflow-y-auto" required></textarea>
             <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl h-[48px] w-[48px] flex items-center justify-center shrink-0 transition">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
@@ -69,16 +56,11 @@
     </footer>
 
     <script>
-        // ==========================================
-        // KONFIGURASI MARKDOWN & HIGHLIGHT.JS
-        // ==========================================
         const renderer = {
             code(code, info) {
                 const language = info || 'plaintext';
                 const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
                 const highlighted = hljs.highlight(code, { language: validLanguage }).value;
-                
-                // Escape code untuk disembunyikan di textarea (agar aman dicopy)
                 const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 
                 return `
@@ -97,16 +79,10 @@
         };
         marked.use({ renderer });
 
-        // ==========================================
-        // FUNGSI COPY CODE (Aman untuk iframe)
-        // ==========================================
         window.copyCode = function(btn) {
             const container = btn.closest('.relative');
             const textArea = container.querySelector('.hidden-code');
-            
-            // Buat elemen textarea sementara
             const tempTextArea = document.createElement('textarea');
-            // Decode HTML entities balik ke teks asli sebelum di-copy
             const txt = document.createElement("textarea");
             txt.innerHTML = textArea.innerHTML;
             tempTextArea.value = txt.value;
@@ -115,10 +91,7 @@
             tempTextArea.select();
             
             try {
-                // Menggunakan execCommand agar kompatibel dan bebas blokir iframe
                 document.execCommand('copy');
-                
-                // Ubah UI Tombol menjadi Sukses
                 const textSpan = btn.querySelector('.copy-text');
                 const icon = btn.querySelector('i');
                 const originalText = textSpan.innerText;
@@ -132,17 +105,12 @@
                     icon.className = originalIcon;
                 }, 2000);
             } catch (err) {
-                console.error('Gagal menyalin kode:', err);
-                alert('Gagal menyalin kode. Browser Anda mungkin tidak mendukung.');
+                alert('Gagal menyalin kode.');
             } finally {
                 document.body.removeChild(tempTextArea);
             }
         };
 
-
-        // ==========================================
-        // LOGIKA CHAT & UI
-        // ==========================================
         const chatBox = document.getElementById('chat-box');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
@@ -163,7 +131,6 @@
                 ? `<div class="bg-blue-600 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-user text-white"></i></div>`
                 : `<div class="bg-slate-800 rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0"><i class="fa-solid fa-robot text-white"></i></div>`;
 
-            // Parsing markdown untuk pesan assistant
             const displayContent = isUser ? content.replace(/\n/g, '<br>') : marked.parse(content);
 
             messageDiv.innerHTML = `
@@ -181,7 +148,7 @@
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'loading-indicator';
             loadingDiv.className = 'flex items-center gap-2 text-gray-500 text-sm ml-12 mb-4';
-            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> DevBot sedang memikirkan kode...';
+            loadingDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i> DevBot sedang memikirkan kode (Bisa memakan waktu 10-30 detik)...';
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -211,29 +178,43 @@
                     body: JSON.stringify({ messages: conversationHistory })
                 });
 
-                const data = await response.json();
+                // PERBAIKAN: Baca sebagai teks dulu agar tidak crash jika balasan bukan JSON
+                const responseText = await response.text();
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error("Respons mentah dari server:", responseText);
+                    throw new Error("Server mengirim balasan yang rusak atau koneksi terputus. (Cek log di console browser)");
+                }
+
                 hideLoading();
 
-                if (data.reply) {
+                if (response.ok && data.reply) {
                     addMessage('assistant', data.reply);
                     conversationHistory.push({ role: 'assistant', content: data.reply });
                 } else {
-                    addMessage('assistant', `*Error: ${data.error || 'Terjadi kesalahan internal'}*`);
+                    addMessage('assistant', `*Error dari Server: ${data.error || 'Terjadi kesalahan internal'}*`);
                 }
             } catch (error) {
                 hideLoading();
-                addMessage('assistant', `*Error: Gagal terhubung ke server.*`);
+                // PERBAIKAN: Tampilkan error apa adanya ke layar untuk mempermudah perbaikan
+                addMessage('assistant', `*Error Sistem: ${error.message}*`);
+                console.error("Detail Error:", error);
             } finally {
                 sendBtn.disabled = false;
             }
         });
 
+        // PERBAIKAN: Mencegah error refresh page di mobile saat menekan ENTER
         messageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                chatForm.dispatchEvent(new Event('submit'));
+                sendBtn.click(); // Lebih stabil daripada dispatchEvent
             }
         });
     </script>
 </body>
 </html>
+
