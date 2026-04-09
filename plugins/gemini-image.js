@@ -1,5 +1,11 @@
 import axios from 'axios';
-import { fileTypeFromBuffer } from 'file-type';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Setup __dirname untuk ES Module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const CONFIG = {
     GEMINI: {
@@ -13,7 +19,6 @@ const CONFIG = {
     }
 };
 
-// Fungsi untuk mendapatkan token autentikasi
 async function getNewToken() {
     try {
         const response = await axios.post(
@@ -35,7 +40,9 @@ async function getNewToken() {
     }
 }
 
-// Fungsi utama untuk generate/edit image
+/**
+ * Generate / edit image dengan Gemini 3 Pro Image (Nano Banana Pro)
+ */
 async function generateImage(prompt, fileBuffer = null) {
     const token = await getNewToken();
     if (!token) throw new Error("Gagal mendapatkan token autentikasi Gemmy");
@@ -43,6 +50,7 @@ async function generateImage(prompt, fileBuffer = null) {
     const parts = [{ text: prompt }];
 
     if (fileBuffer) {
+        const { fileTypeFromBuffer } = await import("file-type");
         const detected = await fileTypeFromBuffer(fileBuffer);
         const mimeType = detected?.mime ?? "image/jpeg";
         parts.push({
@@ -93,67 +101,78 @@ async function generateImage(prompt, fileBuffer = null) {
 // EXPORT PLUGIN SESUAI ARSITEKTUR
 // ==========================================
 export default {
-  id: 'gemini-image-generator',
-  name: 'Gemini Image Generator',
-  description: 'Generate atau edit gambar menggunakan Gemini 3.1 Flash Image Preview. Dilengkapi dengan auto-retry jika terjadi kegagalan.',
-  method: 'post',
-  path: '/api/tools/generate-image',
-  tags: ['Image Tools'],
-  parameters: [
-    { in: 'body', name: 'prompt', type: 'string', required: true, description: 'Deskripsi gambar yang ingin dibuat' },
-    { in: 'body', name: 'imageBase64', type: 'string', required: false, description: 'Opsional: Base64 gambar untuk diedit (bisa dengan atau tanpa prefix data:image/...)' }
-  ],
-  handler: async (req, res) => {
-    const { prompt, imageBase64 } = req.body;
+    id: 'gemini-image-generator',
+    name: 'Gemini Image Generator',
+    description: 'Generate gambar menggunakan Gemini 3.1 Flash Image Preview dengan sistem auto-retry.',
+    method: 'post',
+    path: '/api/tools/generate-image',
+    tags: ['AI Tools', 'Image'],
+    parameters: [
+        { in: 'body', name: 'prompt', type: 'string', required: true, description: 'Deskripsi gambar yang ingin dibuat' }
+    ],
+    handler: async (req, res) => {
+        const { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ success: false, error: 'Parameter "prompt" wajib diisi.' });
-    }
-
-    let fileBuffer = null;
-    if (imageBase64) {
-      try {
-        // Menghapus prefix "data:image/png;base64," jika dikirim dari frontend
-        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-        fileBuffer = Buffer.from(base64Data, 'base64');
-      } catch (err) {
-        return res.status(400).json({ success: false, error: 'Format imageBase64 tidak valid.' });
-      }
-    }
-
-    // Konfigurasi Auto-Retry
-    const maxRetries = 5; // Maksimal percobaan ulang
-    let lastError = null;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const result = await generateImage(prompt, fileBuffer);
-        
-        // Jika berhasil, langsung kembalikan response
-        return res.json({
-          success: true,
-          data: {
-            mimeType: result.mimeType,
-            base64: result.buffer.toString('base64'),
-            imageUrl: `data:${result.mimeType};base64,${result.buffer.toString('base64')}` // Siap pakai di tag <img> HTML
-          }
-        });
-      } catch (error) {
-        console.error(`[Generate Image] Attempt ${attempt} failed:`, error.message);
-        lastError = error.message;
-        
-        // Jika belum percobaan terakhir, tunggu 1.5 detik sebelum mencoba lagi
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+        if (!prompt) {
+            return res.status(400).json({ success: false, error: "Parameter 'prompt' wajib diisi." });
         }
-      }
-    }
 
-    // Jika semua percobaan gagal
-    return res.status(500).json({ 
-      success: false, 
-      error: `Gagal menghasilkan gambar setelah ${maxRetries} percobaan.`,
-      details: lastError 
-    });
-  }
+        let attempt = 0;
+        const maxAttempts = 10; // Batas maksimal percobaan agar tidak infinite loop
+        let result = null;
+
+        // 1. Sistem Retry (Ulangi sampai berhasil / batas maksimal)
+        while (attempt < maxAttempts) {
+            try {
+                attempt++;
+                console.log(`[Gemini Image] Mencoba generate gambar (Percobaan ${attempt})...`);
+                result = await generateImage(prompt);
+                break; // Jika berhasil, keluar dari loop
+            } catch (error) {
+                console.error(`[Gemini Image] Percobaan ${attempt} gagal:`, error.message);
+                if (attempt >= maxAttempts) {
+                    return res.status(500).json({ 
+                        success: false, 
+                        error: `Gagal menghasilkan gambar setelah ${maxAttempts} kali percobaan.` 
+                    });
+                }
+                // Jeda 1.5 detik sebelum mencoba lagi untuk menghindari rate-limit
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        }
+
+        // 2. Simpan gambar dan buat URL
+        try {
+            // Arahkan ke folder public/images di root project
+            const publicDir = path.join(__dirname, '..', 'public', 'images');
+            
+            // Buat folder jika belum ada
+            await fs.mkdir(publicDir, { recursive: true });
+
+            // Tentukan ekstensi file dan nama file unik
+            const ext = result.mimeType.split('/')[1] || 'png';
+            const filename = `gemini_${Date.now()}.${ext}`;
+            const filepath = path.join(publicDir, filename);
+
+            // Tulis buffer ke dalam file
+            await fs.writeFile(filepath, result.buffer);
+
+            // Buat URL yang bisa diakses publik
+            const imageUrl = `${req.protocol}://${req.get('host')}/images/${filename}`;
+
+            return res.json({
+                success: true,
+                message: "Gambar berhasil dibuat!",
+                data: {
+                    prompt: prompt,
+                    imageUrl: imageUrl,
+                    mimeType: result.mimeType,
+                    attempts: attempt
+                }
+            });
+        } catch (err) {
+            console.error("[Gemini Image] Error menyimpan gambar:", err);
+            return res.status(500).json({ success: false, error: "Gagal menyimpan gambar ke server." });
+        }
+    }
 };
