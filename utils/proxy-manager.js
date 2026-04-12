@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // 1. Daftar Proxy Pool (Bisa diganti dengan proxy berbayar Anda)
 const proxyPool = [
-  { host: '103.152.118.162', port: 80 },
-  { host: '198.49.68.80', port: 80 },
-  { host: '8.210.83.33', port: 80 },
+  { host: '103.152.118.162' },
+  { host: '198.49.68.80'},
+  { host: '8.210.83.33' },
   // Tambahkan daftar proxy lainnya di sini...
 ];
 
@@ -32,7 +32,6 @@ export function setupGlobalProxy() {
       config.proxy = {
         protocol: 'http',
         host: randomProxy.host,
-        port: randomProxy.port,
         // auth: { username: 'user', password: 'pwd' } // Buka komentar ini jika pakai proxy berbayar
       };
 
@@ -40,7 +39,7 @@ export function setupGlobalProxy() {
       config.headers['User-Agent'] = randomUA;
 
       // Log untuk memantau di terminal (Bisa dihapus jika tidak perlu)
-      console.log(`[Global Proxy] 🔄 Merotasi IP ke ${randomProxy.host}:${randomProxy.port} untuk tujuan: ${config.url}`);
+      console.log(`[Global Proxy] 🔄 Merotasi IP ke ${randomProxy.host} untuk tujuan: ${config.url}`);
 
       return config;
     },
