@@ -3,14 +3,15 @@ import axios from "axios";
 const proxyPool = [
     { name: "caliph", host: "https://cors.caliph.my.id/" },
     { name: "eu", host: "https://cors.eu.org/" },
-    { name: "rpoxy", host: "https://rpoxy.apis6.workers.dev/" },
     { name: "prox", host: "https://prox.26bruunjorl.workers.dev/" },
-    { name: "aged", host: "https://aged-hill-ab3a.apis4.workers.dev/" },
     { name: "wave", host: "https://plain-wave-6f5f.apis1.workers.dev/" },
     { name: "hill", host: "https://young-hill-815e.apis3.workers.dev/" },
     { name: "icy", host: "https://icy-morning-72e2.apis2.workers.dev/" },
     { name: "fazri", host: "https://cors.fazri.workers.dev/" },
-    { name: "spring", host: "https://spring-night-57a1.3540746063.workers.dev/" },
+    {
+        name: "spring",
+        host: "https://spring-night-57a1.3540746063.workers.dev/"
+    },
     { name: "sizable", host: "https://cors.sizable.workers.dev/" },
     { name: "jiashu", host: "https://jiashu.1win.eu.org/" }
 ];
@@ -55,7 +56,8 @@ export function setupGlobalProxy() {
             if (alreadyProxied) return config;
 
             const proxy = getRandomProxy();
-            const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
+            const randomUA =
+                userAgents[Math.floor(Math.random() * userAgents.length)];
 
             // ✅ FIX UTAMA: Wrap URL target ke dalam CORS proxy
             // Sebelum (salah): config.proxy = { host: proxyUrl }
@@ -86,7 +88,9 @@ export function setupGlobalProxy() {
             const meta = error.config?.metadata;
             if (meta?.proxyName) {
                 failedProxies.add(meta.proxyName);
-                console.warn(`[Global Proxy] ❌ Proxy "${meta.proxyName}" gagal, diblokir sementara`);
+                console.warn(
+                    `[Global Proxy] ❌ Proxy "${meta.proxyName}" gagal, diblokir sementara`
+                );
             }
             return Promise.reject(error);
         }
