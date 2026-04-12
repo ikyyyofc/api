@@ -13,7 +13,47 @@ const proxyPool = [
         host: "https://spring-night-57a1.3540746063.workers.dev/"
     },
     { name: "sizable", host: "https://cors.sizable.workers.dev/" },
-    { name: "jiashu", host: "https://jiashu.1win.eu.org/" }
+    { name: "jiashu", host: "https://jiashu.1win.eu.org/" },
+      {
+        name: "artemisandros",
+        host: "https://cors.artemisandros.workers.dev/?"
+    },
+    {
+        name: "supershadowcube",
+        host: "https://cloudflare-cors-anywhere.supershadowcube.workers.dev/?url="
+    },
+    {
+        name: "prox",
+        host: "https://prox.26bruunjorl.workers.dev/"
+    },
+    {
+        name: "wave",
+        host: "https://plain-wave-6f5f.apis1.workers.dev/"
+    },
+    {
+        name: "hill",
+        host: "https://young-hill-815e.apis3.workers.dev/"
+    },
+    {
+        name: "icy",
+        host: "https://icy-morning-72e2.apis2.workers.dev/"
+    },
+    {
+        name: "fazri",
+        host: "https://cors.fazri.workers.dev/"
+    },
+    {
+        name: "spring",
+        host: "https://spring-night-57a1.3540746063.workers.dev/"
+    },
+    {
+        name: "sizable",
+        host: "https://cors.sizable.workers.dev/"
+    },
+    {
+        name: "jiashu",
+        host: "https://jiashu.1win.eu.org/"
+    }
 ];
 
 const userAgents = [
