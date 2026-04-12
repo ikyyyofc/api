@@ -14,7 +14,7 @@ const proxyPool = [
     },
     { name: "sizable", host: "https://cors.sizable.workers.dev/" },
     { name: "jiashu", host: "https://jiashu.1win.eu.org/" },
-      {
+    {
         name: "artemisandros",
         host: "https://cors.artemisandros.workers.dev/?"
     },
