@@ -91,17 +91,26 @@ const userAgents = [
 ];
 
 // Track proxy yang gagal untuk sementara dihindari
-const failedProxies = new Set();
+const failedProxies = new Map();
+const COOLDOWN_TIME = 15 * 60 * 1000;
 
 function getRandomProxy() {
-    // Filter proxy yang belum gagal
-    const available = proxyPool.filter(p => !failedProxies.has(p.name));
-    // Kalau semua gagal, reset dan coba lagi dari awal
-    if (available.length === 0) {
-        failedProxies.clear();
-        console.warn("[Global Proxy] ⚠️ Semua proxy gagal, mereset daftar...");
-        return proxyPool[Math.floor(Math.random() * proxyPool.length)];
+    const now = Date.now();
+
+  // 2. Cek dan hapus proxy dari daftar blokir jika sudah lewat 15 menit
+  for (const [name, failedAt] of failedProxies.entries()) {
+    if (now - failedAt > COOLDOWN_TIME) {
+      failedProxies.delete(name);
+      console.log(`[Global Proxy] 🔓 ${name} telah dibuka kembali (masa tunggu 15 menit selesai)`);
     }
+  }
+const available = proxyPool.filter(p => !failedProxies.has(p.name));
+
+  if (available.length === 0) {
+    failedProxies.clear();
+    console.warn("[Global Proxy] ⚠️ Semua proxy gagal, mereset paksa daftar...");
+    return proxyPool[Math.floor(Math.random() * proxyPool.length)];
+  }
     return available[Math.floor(Math.random() * available.length)];
 }
 
@@ -155,7 +164,7 @@ export function setupGlobalProxy() {
         error => {
             const meta = error.config?.metadata;
             if (meta?.proxyName) {
-                failedProxies.add(meta.proxyName);
+                failedProxies.set(meta.proxyName, Date.now());
                 console.warn(
                     `[Global Proxy] ❌ Proxy "${meta.proxyName}" gagal, diblokir sementara`
                 );
