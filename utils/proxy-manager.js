@@ -90,14 +90,12 @@ const userAgents = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36"
 ];
 
-// Track proxy yang gagal untuk sementara dihindari
 const failedProxies = new Map();
 const COOLDOWN_TIME = 15 * 60 * 1000;
 
 function getRandomProxy() {
     const now = Date.now();
 
-  // 2. Cek dan hapus proxy dari daftar blokir jika sudah lewat 15 menit
   for (const [name, failedAt] of failedProxies.entries()) {
     if (now - failedAt > COOLDOWN_TIME) {
       failedProxies.delete(name);
