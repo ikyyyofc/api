@@ -115,12 +115,11 @@ const available = proxyPool.filter(p => !failedProxies.has(p.name));
 }
 
 export function setupGlobalProxy() {
-    // ✅ Interceptor REQUEST — modifikasi URL sebelum dikirim
     axios.interceptors.request.use(
         config => {
             const url = config.url || "";
 
-            // Bypass: jangan proxy kalau request ke internal/localhost
+
             const isInternal =
                 url.includes("localhost") ||
                 url.includes("127.0.0.1") ||
@@ -128,7 +127,7 @@ export function setupGlobalProxy() {
 
             if (isInternal) return config;
 
-            // Bypass: jangan double-proxy kalau URL sudah mengandung proxy host
+
             const alreadyProxied = proxyPool.some(p => url.startsWith(p.host));
             if (alreadyProxied) return config;
 
@@ -136,19 +135,17 @@ export function setupGlobalProxy() {
             const randomUA =
                 userAgents[Math.floor(Math.random() * userAgents.length)];
 
-            // ✅ FIX UTAMA: Wrap URL target ke dalam CORS proxy
-            // Sebelum (salah): config.proxy = { host: proxyUrl }
-            // Sesudah (benar): config.url = proxyHost + targetUrl
+
             config.url = `${proxy.host}${url}`;
 
-            // ✅ Matikan proxy native Axios agar tidak konflik
+
             config.proxy = false;
 
-            // Sisipkan User-Agent palsu
+
             config.headers = config.headers || {};
             config.headers["User-Agent"] = randomUA;
 
-            // Simpan nama proxy ke config untuk dipakai di response interceptor
+
             config.metadata = { proxyName: proxy.name, proxyHost: proxy.host };
 
             console.log(`[Global Proxy] 🔄 ${proxy.name} → ${url}`);
@@ -158,7 +155,6 @@ export function setupGlobalProxy() {
         error => Promise.reject(error)
     );
 
-    // ✅ Interceptor RESPONSE — tandai proxy yang gagal
     axios.interceptors.response.use(
         response => response,
         error => {
