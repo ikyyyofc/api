@@ -22,7 +22,7 @@ export default {
         `https://api.magnific.com/v1/ai/video/kling-v3-motion-control-pro/${task_id}`,
         {
           headers: {
-            "x-freepik-api-key": api_key
+            "x-magnific-api-key": api_key
           }
         }
       );
