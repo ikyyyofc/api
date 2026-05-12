@@ -19,7 +19,7 @@ export default {
       }
 
       const checkRes = await axios.get(
-        `https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro/${task_id}`,
+        `https://api.magnific.com/v1/ai/video/kling-v3-motion-control-pro/${task_id}`,
         {
           headers: {
             "x-freepik-api-key": api_key
