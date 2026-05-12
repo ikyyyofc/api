@@ -97,9 +97,6 @@ export default {
                         {
                             image_url,
                             video_url,
-                            prompt:
-                                prompt ||
-                                "follow the subject's movements and camera movements with precision. sometimes body parts that should be touching each other become spaced apart due to differences in body size, so try to follow the movements in the video, don't leave any space.",
                             //cfg_scale: 1,
                             character_orientation:
                                 character_orientation || "video"
