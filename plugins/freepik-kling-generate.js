@@ -115,6 +115,7 @@ export default {
                 } catch (error) {
                     const status = error.response?.status;
                     // Jika limit (429) atau invalid/unauthorized (401, 403)
+                    console.log(error.response.data)
                     if (status === 401 || status === 403 || status === 429) {
                         removedKeys.push({
                             key: usedKey,
