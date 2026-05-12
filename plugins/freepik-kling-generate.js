@@ -107,7 +107,7 @@ export default {
                         {
                             headers: {
                                 "Content-Type": "application/json",
-                                "x-freepik-api-key": usedKey
+                                "x-magnific-api-key": usedKey
                             }
                         }
                     );
