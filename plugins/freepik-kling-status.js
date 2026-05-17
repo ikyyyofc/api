@@ -19,7 +19,7 @@ export default {
       }
 
       const checkRes = await axios.get(
-        `https://api.magnific.com/v1/ai/video/kling-v3-motion-control-pro/${task_id}`,
+        `https://api.magnific.com/v1/ai/image-to-video/kling-v2-6/${task_id}`,
         {
           headers: {
             "x-magnific-api-key": api_key
