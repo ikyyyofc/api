@@ -93,7 +93,7 @@ export default {
 
                 try {
                     createRes = await axios.post(
-                        "https://api.magnific.com/v1/ai/video/kling-v3-motion-control-pro",
+                        "https://api.magnific.com/v1/ai/video/kling-v2-6-motion-control-pro",
                         {
                             image_url,
                             video_url,
